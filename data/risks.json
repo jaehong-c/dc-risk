@@ -1,0 +1,3178 @@
+{
+  "meta": {
+    "version": "0.1",
+    "note": "Curated prototype risk library for data center development and operations. Base scores and trigger rules reflect the author's judgment informed by public industry sources, not proprietary company data. Likelihood and impact are scored 1 to 5; score = likelihood x impact.",
+    "scale": {
+      "likelihood": {
+        "1": "Rare (<10%)",
+        "2": "Unlikely (10-30%)",
+        "3": "Possible (30-50%)",
+        "4": "Likely (50-80%)",
+        "5": "Almost certain (>80%)"
+      },
+      "impact": {
+        "1": "Negligible: <1% cost or <2 wk schedule",
+        "2": "Minor: 1-3% cost or 2-6 wk",
+        "3": "Moderate: 3-7% cost or 6-12 wk",
+        "4": "Major: 7-15% cost or 3-6 mo",
+        "5": "Severe: >15% cost, >6 mo, or COD/lease default"
+      }
+    },
+    "levels": {
+      "low": [
+        1,
+        4
+      ],
+      "medium": [
+        5,
+        9
+      ],
+      "high": [
+        10,
+        15
+      ],
+      "critical": [
+        16,
+        25
+      ]
+    },
+    "phases": [
+      "site_selection",
+      "permitting",
+      "procurement",
+      "construction",
+      "commissioning",
+      "operations"
+    ],
+    "categories": {
+      "SIT": "Site & environmental",
+      "PRM": "Permitting & regulatory",
+      "PWR": "Power & interconnection",
+      "SCM": "Supply chain & procurement",
+      "CON": "Contractor & construction",
+      "SCH": "Schedule",
+      "CST": "Cost & budget",
+      "FIN": "Financial & market",
+      "OPS": "Operations & resilience",
+      "SEC": "Security & compliance",
+      "INS": "Insurance & claims"
+    }
+  },
+  "risks": [
+    {
+      "id": "R-SIT-01",
+      "category": "SIT",
+      "title": "Land control, title, or easement defect",
+      "description": "Site not fully controlled, or title/easement issues (utility corridors, access, mineral rights) surface after commitment.",
+      "phases": [
+        "site_selection",
+        "permitting"
+      ],
+      "baseLikelihood": 2,
+      "baseImpact": 4,
+      "owner": "Development",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "landStatus": [
+              "not_secured"
+            ]
+          },
+          "likelihood": 2,
+          "impact": 0,
+          "note": "No site control in place"
+        },
+        {
+          "when": {
+            "landStatus": [
+              "option"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Option only; exercise conditions and timing exposed"
+        },
+        {
+          "when": {
+            "landStatus": [
+              "owned"
+            ]
+          },
+          "likelihood": -1,
+          "impact": 0,
+          "note": "Fee ownership reduces control risk"
+        }
+      ],
+      "mitigations": [
+        "Complete ALTA survey and title commitment with easement mapping before hard money goes in",
+        "Negotiate option terms with extension rights tied to interconnection milestones",
+        "Secure access and utility easements as closing conditions"
+      ],
+      "kri": "Days to option expiry vs. days to interconnection study completion"
+    },
+    {
+      "id": "R-SIT-02",
+      "category": "SIT",
+      "title": "Adverse geotechnical or subsurface conditions",
+      "description": "Poor bearing capacity, shallow rock, high groundwater, or karst drives foundation redesign and cost.",
+      "phases": [
+        "site_selection",
+        "permitting",
+        "construction"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 3,
+      "owner": "Engineering",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "capacityMW": {
+              "gte": 300
+            }
+          },
+          "likelihood": 0,
+          "impact": 1,
+          "note": "Large footprint increases exposure to variable conditions"
+        }
+      ],
+      "mitigations": [
+        "Phase geotechnical program: preliminary borings before LOI, full program before GMP",
+        "Carry geotechnical contingency separately in the budget until borings close out",
+        "Include differing site conditions clause with clear baseline report in the GC contract"
+      ],
+      "kri": "Percent of building footprint covered by borings at GMP"
+    },
+    {
+      "id": "R-SIT-03",
+      "category": "SIT",
+      "title": "Environmental contamination requiring remediation",
+      "description": "Phase I/II ESA identifies recognized environmental conditions; remediation adds cost, schedule, and lender conditions.",
+      "phases": [
+        "site_selection",
+        "permitting"
+      ],
+      "baseLikelihood": 2,
+      "baseImpact": 4,
+      "owner": "Development",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "landStatus": [
+              "not_secured",
+              "option"
+            ]
+          },
+          "likelihood": 0,
+          "impact": -1,
+          "note": "Can still walk away before commitment"
+        }
+      ],
+      "mitigations": [
+        "Phase I ESA as a diligence gate; Phase II on any REC before closing",
+        "Seller environmental indemnity or escrow for known conditions",
+        "Pollution legal liability policy at closing"
+      ],
+      "kri": "Open RECs without a closed Phase II"
+    },
+    {
+      "id": "R-SIT-04",
+      "category": "SIT",
+      "title": "Flood exposure",
+      "description": "Site or critical equipment in a mapped or unmapped flood path; stormwater design inadequate for extreme events.",
+      "phases": [
+        "site_selection",
+        "permitting",
+        "construction",
+        "operations"
+      ],
+      "baseLikelihood": 2,
+      "baseImpact": 4,
+      "owner": "Engineering",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "state.flood": {
+              "gte": 2
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Elevated regional flood exposure"
+        },
+        {
+          "when": {
+            "state.flood": {
+              "gte": 3
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "High regional flood exposure"
+        }
+      ],
+      "mitigations": [
+        "Site critical equipment above 500-year elevation, not just 100-year",
+        "Independent hydrology study covering upstream development",
+        "Verify flood sublimits in builder's risk and property programs"
+      ],
+      "kri": "Lowest critical equipment elevation vs. 500-year flood elevation"
+    },
+    {
+      "id": "R-SIT-05",
+      "category": "SIT",
+      "title": "Hurricane and severe wind",
+      "description": "Wind damage to structures, roof-mounted equipment, and utility supply during construction and operations.",
+      "phases": [
+        "construction",
+        "commissioning",
+        "operations"
+      ],
+      "baseLikelihood": 2,
+      "baseImpact": 4,
+      "owner": "Engineering",
+      "controlType": "preventive",
+      "activeWhen": {
+        "state.hurricane": {
+          "gte": 1
+        }
+      },
+      "triggers": [
+        {
+          "when": {
+            "state.hurricane": {
+              "gte": 2
+            }
+          },
+          "likelihood": 2,
+          "impact": 0,
+          "note": "Coastal or Gulf exposure"
+        }
+      ],
+      "mitigations": [
+        "Design to enhanced wind speed above code minimum for mission-critical",
+        "Hurricane season construction sequencing and tie-down plan",
+        "Named-storm deductible and sublimit review in insurance placement"
+      ],
+      "kri": "Named-storm deductible as percent of TIV"
+    },
+    {
+      "id": "R-SIT-06",
+      "category": "SIT",
+      "title": "Tornado and hail",
+      "description": "Convective storms damage exposed cooling equipment, roofing, and temporary construction works.",
+      "phases": [
+        "construction",
+        "operations"
+      ],
+      "baseLikelihood": 2,
+      "baseImpact": 3,
+      "owner": "Engineering",
+      "controlType": "preventive",
+      "activeWhen": {
+        "state.tornado": {
+          "gte": 1
+        }
+      },
+      "triggers": [
+        {
+          "when": {
+            "state.tornado": {
+              "gte": 2
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Plains or Southeast convective exposure"
+        }
+      ],
+      "mitigations": [
+        "Hail-rated coils and guards on rooftop and yard equipment",
+        "Storm shelter and severe weather procedures for site workforce",
+        "Hail sublimit check in property program"
+      ],
+      "kri": "Unprotected exposed equipment count"
+    },
+    {
+      "id": "R-SIT-07",
+      "category": "SIT",
+      "title": "Wildfire and smoke",
+      "description": "Wildfire threatens transmission lines and site; smoke degrades air-side cooling and filtration.",
+      "phases": [
+        "site_selection",
+        "operations"
+      ],
+      "baseLikelihood": 2,
+      "baseImpact": 3,
+      "owner": "Operations",
+      "controlType": "preventive",
+      "activeWhen": {
+        "state.wildfire": {
+          "gte": 1
+        }
+      },
+      "triggers": [
+        {
+          "when": {
+            "state.wildfire": {
+              "gte": 2
+            }
+          },
+          "likelihood": 1,
+          "impact": 1,
+          "note": "High wildfire exposure; PSPS events likely"
+        }
+      ],
+      "mitigations": [
+        "Defensible space and non-combustible perimeter",
+        "Filtration upgrade and smoke-mode procedures for economizer systems",
+        "Dual transmission paths where wildfire threatens single corridor"
+      ],
+      "kri": "Public safety power shutoff events affecting feeder per year"
+    },
+    {
+      "id": "R-SIT-08",
+      "category": "SIT",
+      "title": "Seismic event",
+      "description": "Earthquake damages structure, raised floor, and rack anchoring; utility restoration delayed.",
+      "phases": [
+        "permitting",
+        "construction",
+        "operations"
+      ],
+      "baseLikelihood": 1,
+      "baseImpact": 5,
+      "owner": "Engineering",
+      "controlType": "preventive",
+      "activeWhen": {
+        "state.seismic": {
+          "gte": 2
+        }
+      },
+      "triggers": [
+        {
+          "when": {
+            "state.seismic": {
+              "gte": 3
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "High seismic zone"
+        }
+      ],
+      "mitigations": [
+        "Importance factor and equipment anchorage above code minimum",
+        "Seismic bracing verified during commissioning",
+        "Earthquake sublimit and deductible review"
+      ],
+      "kri": "Percent of critical equipment with verified anchorage"
+    },
+    {
+      "id": "R-SIT-09",
+      "category": "SIT",
+      "title": "Water availability for cooling",
+      "description": "Water rights, municipal allocation, or drought restrictions constrain evaporative cooling capacity.",
+      "phases": [
+        "site_selection",
+        "permitting",
+        "operations"
+      ],
+      "baseLikelihood": 2,
+      "baseImpact": 4,
+      "owner": "Development",
+      "controlType": "preventive",
+      "activeWhen": {
+        "waterSource": [
+          "municipal",
+          "groundwater",
+          "reclaimed"
+        ]
+      },
+      "triggers": [
+        {
+          "when": {
+            "state.waterStress": {
+              "gte": 2
+            }
+          },
+          "likelihood": 2,
+          "impact": 0,
+          "note": "Water-stressed region"
+        },
+        {
+          "when": {
+            "waterSource": [
+              "groundwater"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Groundwater rights and aquifer decline exposure"
+        }
+      ],
+      "mitigations": [
+        "Water supply agreement with defined allocation before design freeze",
+        "Design for dry-mode fallback at reduced capacity",
+        "Reclaimed water source where available"
+      ],
+      "kri": "Contracted water allocation vs. peak design demand"
+    },
+    {
+      "id": "R-SIT-10",
+      "category": "SIT",
+      "title": "Community opposition and reputational risk",
+      "description": "Local opposition over power, water, noise, or tax incentives delays approvals or forces concessions.",
+      "phases": [
+        "site_selection",
+        "permitting",
+        "construction"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 3,
+      "owner": "Development",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "capacityMW": {
+              "gte": 300
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Campus scale draws attention"
+        },
+        {
+          "when": {
+            "taxIncentive": [
+              "in_negotiation"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Incentive debate is public"
+        },
+        {
+          "when": {
+            "state.policyRisk": {
+              "gte": 2
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Active anti-data-center sentiment in state"
+        },
+        {
+          "when": {
+            "waterSource": [
+              "municipal",
+              "groundwater"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Evaporative cooling draws water-use opposition"
+        },
+        {
+          "when": {
+            "state.waterStress": {
+              "gte": 2
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Water scarcity is a public issue in region"
+        }
+      ],
+      "mitigations": [
+        "Community benefits agreement and early stakeholder engagement plan",
+        "Noise modeling and generator testing schedule disclosed upfront",
+        "Single accountable spokesperson and media protocol"
+      ],
+      "kri": "Public comments opposed vs. supportive at last hearing"
+    },
+    {
+      "id": "R-SIT-11",
+      "category": "SIT",
+      "title": "Wetlands, species, and federal environmental review",
+      "description": "Wetland delineation, endangered species, or federal nexus triggers 404 permitting or NEPA review.",
+      "phases": [
+        "site_selection",
+        "permitting"
+      ],
+      "baseLikelihood": 2,
+      "baseImpact": 4,
+      "owner": "Development",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "permittingStatus": [
+              "not_started"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "No delineation or agency consultation yet"
+        }
+      ],
+      "mitigations": [
+        "Wetland delineation and habitat survey before site commitment",
+        "Site plan to avoid jurisdictional features rather than mitigate",
+        "Early agency pre-application meetings"
+      ],
+      "kri": "Acres of jurisdictional impact in current site plan"
+    },
+    {
+      "id": "R-SIT-12",
+      "category": "SIT",
+      "title": "Fiber and network connectivity",
+      "description": "Insufficient diverse fiber routes or carrier presence delays tenant readiness.",
+      "phases": [
+        "site_selection",
+        "construction"
+      ],
+      "baseLikelihood": 2,
+      "baseImpact": 3,
+      "owner": "Development",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "workloadType": [
+              "inference",
+              "colo"
+            ]
+          },
+          "likelihood": 0,
+          "impact": 1,
+          "note": "Latency-sensitive workloads depend on connectivity"
+        }
+      ],
+      "mitigations": [
+        "Two physically diverse fiber entries with separate carriers",
+        "Carrier build agreements executed with COD-aligned milestones",
+        "Meet-me room design reviewed with tenant"
+      ],
+      "kri": "Number of diverse fiber paths under contract"
+    },
+    {
+      "id": "R-PRM-01",
+      "category": "PRM",
+      "title": "Zoning and entitlement denial or onerous conditions",
+      "description": "Rezoning, special use, or site plan approval is denied, delayed, or conditioned in ways that impair the project.",
+      "phases": [
+        "site_selection",
+        "permitting"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 4,
+      "owner": "Development",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "permittingStatus": [
+              "not_started"
+            ]
+          },
+          "likelihood": 2,
+          "impact": 0,
+          "note": "Entitlement path not yet tested"
+        },
+        {
+          "when": {
+            "permittingStatus": [
+              "in_progress"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Approval pending"
+        },
+        {
+          "when": {
+            "permittingStatus": [
+              "complete"
+            ]
+          },
+          "likelihood": -2,
+          "impact": 0,
+          "note": "Entitlements secured"
+        }
+      ],
+      "mitigations": [
+        "By-right site selection where possible; avoid discretionary approvals",
+        "Land use counsel engaged before LOI",
+        "Condition option exercise on entitlement approval"
+      ],
+      "kri": "Discretionary approvals remaining on critical path"
+    },
+    {
+      "id": "R-PRM-02",
+      "category": "PRM",
+      "title": "Air permit for backup or onsite generation",
+      "description": "Emissions permitting for diesel gensets or gas generation (minor source vs. Title V) delays energization or limits run hours.",
+      "phases": [
+        "permitting",
+        "construction",
+        "commissioning"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 4,
+      "owner": "Engineering",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "powerSource": [
+              "onsite_gas",
+              "hybrid"
+            ]
+          },
+          "likelihood": 2,
+          "impact": 1,
+          "note": "Prime power generation raises permit class and scrutiny"
+        },
+        {
+          "when": {
+            "capacityMW": {
+              "gte": 200
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Generator fleet likely exceeds minor source thresholds"
+        }
+      ],
+      "mitigations": [
+        "Air permit application submitted before genset procurement",
+        "Tier 4 or SCR equipment selection to stay below thresholds",
+        "Run-hour limits reflected in operating procedures"
+      ],
+      "kri": "Air permit issuance date vs. genset delivery date"
+    },
+    {
+      "id": "R-PRM-03",
+      "category": "PRM",
+      "title": "Utility and regulatory approval of large-load interconnection",
+      "description": "PUC, ISO, or utility large-load process (studies, tariffs, deposits) adds time and conditions beyond the utility agreement.",
+      "phases": [
+        "site_selection",
+        "permitting",
+        "procurement"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 4,
+      "owner": "Development",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "powerStatus": [
+              "unsecured"
+            ]
+          },
+          "likelihood": 2,
+          "impact": 0,
+          "note": "No utility commitment"
+        },
+        {
+          "when": {
+            "powerStatus": [
+              "in_negotiation"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Terms not final"
+        },
+        {
+          "when": {
+            "state.gridOperator": [
+              "ERCOT"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Large-load interconnection rules evolving"
+        }
+      ],
+      "mitigations": [
+        "Track regulatory dockets affecting large-load tariffs monthly",
+        "Regulatory counsel review of utility agreement conditions",
+        "Deposit and study fees carried as at-risk capital"
+      ],
+      "kri": "Open regulatory conditions precedent in utility agreement"
+    },
+    {
+      "id": "R-PRM-04",
+      "category": "PRM",
+      "title": "Tax incentive not executed or subject to clawback",
+      "description": "Sales tax exemption, abatement, or PILOT not finalized, or clawback triggered by job or capex shortfall.",
+      "phases": [
+        "site_selection",
+        "permitting",
+        "operations"
+      ],
+      "baseLikelihood": 2,
+      "baseImpact": 3,
+      "owner": "Finance",
+      "controlType": "preventive",
+      "activeWhen": {
+        "taxIncentive": [
+          "in_negotiation",
+          "executed"
+        ]
+      },
+      "triggers": [
+        {
+          "when": {
+            "taxIncentive": [
+              "in_negotiation"
+            ]
+          },
+          "likelihood": 2,
+          "impact": 0,
+          "note": "Incentive assumed in pro forma but not executed"
+        },
+        {
+          "when": {
+            "state.policyRisk": {
+              "gte": 2
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Legislative review of DC incentives active"
+        }
+      ],
+      "mitigations": [
+        "Pro forma sensitivity without incentive",
+        "Clawback thresholds tracked against actual jobs and capex",
+        "Executed agreement as condition to GMP"
+      ],
+      "kri": "Incentive value assumed vs. executed"
+    },
+    {
+      "id": "R-PRM-05",
+      "category": "PRM",
+      "title": "Building code and fire marshal approvals for new technology",
+      "description": "Liquid cooling, lithium-ion ESS, or high-density electrical rooms face code interpretation delays.",
+      "phases": [
+        "permitting",
+        "construction",
+        "commissioning"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 2,
+      "owner": "Engineering",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "coolingType": [
+              "liquid",
+              "hybrid"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 1,
+          "note": "Limited AHJ precedent for liquid cooling"
+        }
+      ],
+      "mitigations": [
+        "Pre-application meeting with AHJ on novel systems",
+        "Third-party code consultant and alternative means submittals",
+        "NFPA 855 compliance plan for any ESS"
+      ],
+      "kri": "Open code interpretation requests"
+    },
+    {
+      "id": "R-PRM-06",
+      "category": "PRM",
+      "title": "Regulatory or policy change",
+      "description": "New state or local rules (moratoria, water reporting, rate design, large-load tariffs) change project economics after commitment.",
+      "phases": [
+        "site_selection",
+        "permitting",
+        "operations"
+      ],
+      "baseLikelihood": 2,
+      "baseImpact": 3,
+      "owner": "Development",
+      "controlType": "detective",
+      "triggers": [
+        {
+          "when": {
+            "state.policyRisk": {
+              "gte": 2
+            }
+          },
+          "likelihood": 2,
+          "impact": 0,
+          "note": "Active legislative attention to data centers"
+        }
+      ],
+      "mitigations": [
+        "Legislative tracking and industry association participation",
+        "Grandfathering language in utility and incentive agreements",
+        "Scenario analysis on rate design changes"
+      ],
+      "kri": "Pending bills affecting data centers in state session"
+    },
+    {
+      "id": "R-PWR-01",
+      "category": "PWR",
+      "title": "Power not secured or interconnection delayed",
+      "description": "Utility cannot deliver contracted capacity by required date; interconnection studies or transmission build slip.",
+      "phases": [
+        "site_selection",
+        "permitting",
+        "procurement",
+        "construction"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 5,
+      "owner": "Development",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "powerStatus": [
+              "unsecured"
+            ]
+          },
+          "likelihood": 2,
+          "impact": 0,
+          "note": "No power commitment"
+        },
+        {
+          "when": {
+            "powerStatus": [
+              "in_negotiation"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Terms under negotiation"
+        },
+        {
+          "when": {
+            "powerStatus": [
+              "secured"
+            ]
+          },
+          "likelihood": -2,
+          "impact": 0,
+          "note": "Executed agreement with delivery date"
+        },
+        {
+          "when": {
+            "capacityMW": {
+              "gte": 300
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Campus scale typically requires transmission upgrades"
+        },
+        {
+          "when": {
+            "state.gridConstraint": {
+              "gte": 2
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Constrained transmission market; queue delays common"
+        },
+        {
+          "when": {
+            "state.gridConstraint": {
+              "gte": 3
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Severely constrained market; multi-year queue"
+        }
+      ],
+      "mitigations": [
+        "Executed electric service agreement with firm energization date before GMP",
+        "Phased energization aligned with tenant ramp",
+        "Bridge power options (onsite generation, BESS) evaluated as contingency"
+      ],
+      "kri": "Utility energization date vs. tenant COD, in months"
+    },
+    {
+      "id": "R-PWR-02",
+      "category": "PWR",
+      "title": "Network upgrade cost allocation",
+      "description": "Utility assigns transmission or substation upgrade costs to the project beyond what was underwritten.",
+      "phases": [
+        "permitting",
+        "procurement"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 3,
+      "owner": "Finance",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "powerStatus": [
+              "in_negotiation",
+              "unsecured"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Upgrade scope not fixed"
+        },
+        {
+          "when": {
+            "capacityMW": {
+              "gte": 500
+            }
+          },
+          "likelihood": 0,
+          "impact": 1,
+          "note": "Gigawatt-scale upgrades are material to budget"
+        },
+        {
+          "when": {
+            "state.gridConstraint": {
+              "gte": 2
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Upgrades more likely to be assigned to project"
+        }
+      ],
+      "mitigations": [
+        "Cap or share upgrade costs in the electric service agreement",
+        "Refund mechanisms for shared infrastructure",
+        "Upgrade scope confirmed in facilities study before financing close"
+      ],
+      "kri": "Upgrade cost estimate vs. underwriting"
+    },
+    {
+      "id": "R-PWR-03",
+      "category": "PWR",
+      "title": "Energization slips against COD",
+      "description": "Even with an agreement, utility construction, equipment, or testing slips push energization past tenant delivery.",
+      "phases": [
+        "construction",
+        "commissioning"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 5,
+      "owner": "Construction",
+      "controlType": "detective",
+      "triggers": [
+        {
+          "when": {
+            "monthsToCOD": {
+              "lte": 18
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Less than 18 months of float"
+        },
+        {
+          "when": {
+            "monthsToCOD": {
+              "lte": 12
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Less than 12 months to COD"
+        },
+        {
+          "when": {
+            "powerStatus": [
+              "secured"
+            ]
+          },
+          "likelihood": -1,
+          "impact": 0,
+          "note": "Firm utility schedule"
+        },
+        {
+          "when": {
+            "state.gridConstraint": {
+              "gte": 2
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Utility construction backlog"
+        }
+      ],
+      "mitigations": [
+        "Monthly utility construction schedule review with named milestones",
+        "Owner-furnished substation equipment to de-risk utility procurement",
+        "Temporary or bridge power plan sized for commissioning loads"
+      ],
+      "kri": "Utility milestone slip in weeks, rolling 90 days"
+    },
+    {
+      "id": "R-PWR-04",
+      "category": "PWR",
+      "title": "Onsite generation execution",
+      "description": "Gas supply, turbine or reciprocating engine lead times, emissions, and O&M complexity for behind-the-meter generation.",
+      "phases": [
+        "permitting",
+        "procurement",
+        "construction",
+        "operations"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 4,
+      "owner": "Engineering",
+      "controlType": "preventive",
+      "activeWhen": {
+        "powerSource": [
+          "onsite_gas",
+          "hybrid"
+        ]
+      },
+      "triggers": [
+        {
+          "when": {
+            "longLeadStatus": [
+              "not_ordered"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Turbine and engine lead times exceed 24 months"
+        }
+      ],
+      "mitigations": [
+        "Firm gas transportation agreement with pipeline capacity confirmed",
+        "Turbine slot reservation before financing close",
+        "Experienced O&M provider under long-term service agreement"
+      ],
+      "kri": "Generation equipment delivery date vs. energization need"
+    },
+    {
+      "id": "R-PWR-05",
+      "category": "PWR",
+      "title": "Curtailment and demand response obligations",
+      "description": "Grid operator requires large loads to curtail during emergencies; tenant SLA and revenue exposed.",
+      "phases": [
+        "permitting",
+        "operations"
+      ],
+      "baseLikelihood": 2,
+      "baseImpact": 3,
+      "owner": "Operations",
+      "controlType": "preventive",
+      "activeWhen": {
+        "capacityMW": {
+          "gte": 75
+        }
+      },
+      "triggers": [
+        {
+          "when": {
+            "state.gridOperator": [
+              "ERCOT"
+            ]
+          },
+          "likelihood": 2,
+          "impact": 0,
+          "note": "Large-load curtailment provisions in effect"
+        },
+        {
+          "when": {
+            "redundancy": [
+              "n"
+            ]
+          },
+          "likelihood": 0,
+          "impact": 1,
+          "note": "No backup capacity to ride through curtailment"
+        }
+      ],
+      "mitigations": [
+        "Curtailment terms mirrored in tenant lease",
+        "Backup generation or BESS sized for expected curtailment events",
+        "Participation in demand response programs for revenue offset"
+      ],
+      "kri": "Curtailment hours per year, contracted vs. actual"
+    },
+    {
+      "id": "R-SCM-01",
+      "category": "SCM",
+      "title": "Long-lead electrical equipment delay",
+      "description": "Transformers, MV switchgear, and generators with 18 to 36 month lead times arrive late or slots are lost.",
+      "phases": [
+        "procurement",
+        "construction"
+      ],
+      "baseLikelihood": 4,
+      "baseImpact": 5,
+      "owner": "Procurement",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "longLeadStatus": [
+              "not_ordered"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "No purchase orders placed"
+        },
+        {
+          "when": {
+            "longLeadStatus": [
+              "partially_ordered"
+            ]
+          },
+          "likelihood": 0,
+          "impact": 0,
+          "note": "Some slots secured"
+        },
+        {
+          "when": {
+            "longLeadStatus": [
+              "ordered"
+            ]
+          },
+          "likelihood": -2,
+          "impact": 0,
+          "note": "POs placed with delivery dates"
+        },
+        {
+          "when": {
+            "monthsToCOD": {
+              "lte": 24
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Lead time exceeds remaining schedule"
+        }
+      ],
+      "mitigations": [
+        "Early procurement approval tracked as a KRI: PO placement date vs. need date, with finance sign-off before GMP",
+        "OEM slot reservations and framework agreements rather than reliance on vendor diversification",
+        "Refurbished and secondary-market transformer vendor pool pre-qualified as contingency",
+        "Weekly expediting reports with factory milestones"
+      ],
+      "kri": "Weeks between PO placement and latest date that still meets need-on-site"
+    },
+    {
+      "id": "R-SCM-02",
+      "category": "SCM",
+      "title": "Backup generator and UPS availability",
+      "description": "Genset and UPS allocations consumed by competing hyperscale demand; substitutions change design.",
+      "phases": [
+        "procurement",
+        "construction"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 4,
+      "owner": "Procurement",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "longLeadStatus": [
+              "not_ordered"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "No allocation secured"
+        },
+        {
+          "when": {
+            "capacityMW": {
+              "gte": 200
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Large fleet order competes for allocation"
+        }
+      ],
+      "mitigations": [
+        "Allocation agreements with OEM for annual volume",
+        "Design flexibility for alternate genset sizes",
+        "Owner-furnished procurement outside GC contract"
+      ],
+      "kri": "Genset allocation confirmed vs. design count"
+    },
+    {
+      "id": "R-SCM-03",
+      "category": "SCM",
+      "title": "Cooling equipment lead time and integration",
+      "description": "Chillers, dry coolers, CDUs, and liquid cooling components delayed or fail integration with IT vendor requirements.",
+      "phases": [
+        "procurement",
+        "construction",
+        "commissioning"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 4,
+      "owner": "Engineering",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "coolingType": [
+              "liquid",
+              "hybrid"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 1,
+          "note": "Immature supply chain for direct liquid cooling"
+        },
+        {
+          "when": {
+            "workloadType": [
+              "ai_training"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "High density ties cooling to specific GPU platform"
+        }
+      ],
+      "mitigations": [
+        "Tenant IT platform locked before cooling design freeze",
+        "Factory witness tests for CDUs and manifolds",
+        "Spare CDU capacity in design"
+      ],
+      "kri": "Cooling design freeze date vs. GPU platform confirmation"
+    },
+    {
+      "id": "R-SCM-04",
+      "category": "SCM",
+      "title": "Tariffs and trade policy",
+      "description": "Import tariffs on transformers, switchgear, steel, and copper raise cost or force sourcing changes mid-procurement.",
+      "phases": [
+        "procurement",
+        "construction"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 3,
+      "owner": "Procurement",
+      "controlType": "detective",
+      "triggers": [
+        {
+          "when": {
+            "longLeadStatus": [
+              "not_ordered",
+              "partially_ordered"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Prices not locked"
+        }
+      ],
+      "mitigations": [
+        "Tariff pass-through language capped in supply contracts",
+        "Domestic or tariff-exempt sourcing alternatives identified",
+        "Commodity escalation contingency line"
+      ],
+      "kri": "Percent of equipment value with fixed pricing"
+    },
+    {
+      "id": "R-SCM-05",
+      "category": "SCM",
+      "title": "Vendor concentration and financial health",
+      "description": "Single-source suppliers or financially weak vendors create delivery and warranty exposure.",
+      "phases": [
+        "procurement",
+        "construction",
+        "operations"
+      ],
+      "baseLikelihood": 2,
+      "baseImpact": 4,
+      "owner": "Procurement",
+      "controlType": "preventive",
+      "triggers": [],
+      "mitigations": [
+        "Financial review of critical vendors before award",
+        "Dual-source strategy for transformers and switchgear",
+        "Escrow or step-in rights for proprietary systems"
+      ],
+      "kri": "Share of critical equipment from single vendor"
+    },
+    {
+      "id": "R-SCM-06",
+      "category": "SCM",
+      "title": "Equipment quality and factory acceptance failures",
+      "description": "FAT failures or shipping damage delay installation and commissioning.",
+      "phases": [
+        "procurement",
+        "construction",
+        "commissioning"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 2,
+      "owner": "Engineering",
+      "controlType": "detective",
+      "triggers": [],
+      "mitigations": [
+        "Witnessed FAT for all major electrical and mechanical equipment",
+        "Third-party inspection at factory and on receipt",
+        "Marine cargo and transit coverage confirmed"
+      ],
+      "kri": "FAT first-pass rate"
+    },
+    {
+      "id": "R-SCM-07",
+      "category": "SCM",
+      "title": "Logistics, transport permits, and laydown",
+      "description": "Oversized transformer transport, crane availability, port congestion, and site storage constraints.",
+      "phases": [
+        "procurement",
+        "construction"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 2,
+      "owner": "Construction",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "capacityMW": {
+              "gte": 300
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Multiple large transformer moves"
+        }
+      ],
+      "mitigations": [
+        "Transport route survey and permits before shipment",
+        "Laydown and storage plan with climate control for sensitive equipment",
+        "Crane and rigging booked against delivery schedule"
+      ],
+      "kri": "Shipments without confirmed transport permit"
+    },
+    {
+      "id": "R-SCM-08",
+      "category": "SCM",
+      "title": "Owner-furnished IT and GPU delivery",
+      "description": "Where the operator furnishes compute, GPU allocation and delivery timing drive revenue start.",
+      "phases": [
+        "procurement",
+        "commissioning",
+        "operations"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 4,
+      "owner": "Finance",
+      "controlType": "preventive",
+      "activeWhen": {
+        "workloadType": [
+          "ai_training",
+          "inference",
+          "hpc"
+        ]
+      },
+      "triggers": [
+        {
+          "when": {
+            "tenantStatus": [
+              "speculative",
+              "loi"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Compute demand not contracted"
+        }
+      ],
+      "mitigations": [
+        "GPU allocation agreements with delivery windows",
+        "Shell readiness decoupled from IT delivery in schedule",
+        "Lease structure clarifying who furnishes compute"
+      ],
+      "kri": "GPU delivery date vs. facility ready-for-IT date"
+    },
+    {
+      "id": "R-CON-01",
+      "category": "CON",
+      "title": "General contractor capability and capacity",
+      "description": "GC lacks mission-critical experience or is overextended across competing data center projects.",
+      "phases": [
+        "procurement",
+        "construction"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 4,
+      "owner": "Construction",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "gcStatus": [
+              "not_selected"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "GC not yet selected"
+        },
+        {
+          "when": {
+            "gcStatus": [
+              "selected_general"
+            ]
+          },
+          "likelihood": 2,
+          "impact": 0,
+          "note": "GC without data center track record"
+        },
+        {
+          "when": {
+            "gcStatus": [
+              "selected_dc_experienced"
+            ]
+          },
+          "likelihood": -1,
+          "impact": 0,
+          "note": "Proven mission-critical builder"
+        }
+      ],
+      "mitigations": [
+        "Prequalification on data center references and current backlog",
+        "Key personnel clause naming superintendent and electrical lead",
+        "Monthly capacity review of GC portfolio"
+      ],
+      "kri": "GC concurrent data center projects vs. stated capacity"
+    },
+    {
+      "id": "R-CON-02",
+      "category": "CON",
+      "title": "Contract structure and risk allocation",
+      "description": "Contract form misallocates cost, schedule, and change risk; liquidated damages inadequate relative to tenant exposure.",
+      "phases": [
+        "procurement",
+        "construction"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 4,
+      "owner": "Legal",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "contractType": [
+              "cost_plus"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 1,
+          "note": "Owner carries cost overrun risk"
+        },
+        {
+          "when": {
+            "contractType": [
+              "lump_sum"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Claims and change order friction more likely"
+        },
+        {
+          "when": {
+            "contractType": [
+              "gmp"
+            ]
+          },
+          "likelihood": -1,
+          "impact": 0,
+          "note": "Shared savings and capped exposure"
+        },
+        {
+          "when": {
+            "tenantStatus": [
+              "signed_hyperscale"
+            ]
+          },
+          "likelihood": 0,
+          "impact": 1,
+          "note": "Tenant LDs must flow down"
+        }
+      ],
+      "mitigations": [
+        "Back-to-back liquidated damages with tenant lease",
+        "Clear change order thresholds and approval matrix",
+        "Contingency ownership and shared savings terms defined"
+      ],
+      "kri": "GC LD cap vs. tenant delay exposure"
+    },
+    {
+      "id": "R-CON-03",
+      "category": "CON",
+      "title": "Skilled labor shortage",
+      "description": "Electricians and mechanical trades unavailable at required volume; productivity and overtime costs rise.",
+      "phases": [
+        "construction",
+        "commissioning"
+      ],
+      "baseLikelihood": 4,
+      "baseImpact": 3,
+      "owner": "Construction",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "state.laborTightness": {
+              "gte": 2
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Regional trade shortage"
+        },
+        {
+          "when": {
+            "capacityMW": {
+              "gte": 200
+            }
+          },
+          "likelihood": 0,
+          "impact": 1,
+          "note": "Peak electrical headcount in the hundreds"
+        }
+      ],
+      "mitigations": [
+        "Labor availability study at site selection",
+        "Prefabrication and modular electrical rooms",
+        "Per diem and travel packages budgeted upfront"
+      ],
+      "kri": "Electrical headcount on site vs. plan"
+    },
+    {
+      "id": "R-CON-04",
+      "category": "CON",
+      "title": "Health and safety incident",
+      "description": "Serious injury or fatality from energized work, falls, heat, or rigging halts work and triggers OSHA action.",
+      "phases": [
+        "construction",
+        "commissioning"
+      ],
+      "baseLikelihood": 2,
+      "baseImpact": 5,
+      "owner": "Construction",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "state.heat": {
+              "gte": 2
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Heat stress exposure"
+        }
+      ],
+      "mitigations": [
+        "Energized work permit and lockout procedures audited weekly",
+        "Heat illness prevention plan",
+        "Leading indicators (near misses, observations) reported monthly"
+      ],
+      "kri": "TRIR and near-miss reports per 200,000 hours"
+    },
+    {
+      "id": "R-CON-05",
+      "category": "CON",
+      "title": "Quality defects and commissioning failures",
+      "description": "Installation defects surface during Level 3 to 5 commissioning, driving rework and delay.",
+      "phases": [
+        "construction",
+        "commissioning"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 3,
+      "owner": "Engineering",
+      "controlType": "detective",
+      "triggers": [
+        {
+          "when": {
+            "gcStatus": [
+              "selected_general"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Less familiarity with mission-critical QA"
+        }
+      ],
+      "mitigations": [
+        "Independent commissioning agent from design phase",
+        "Integrated systems test scripts approved before Level 4",
+        "First-of-kind mockups for repetitive electrical rooms"
+      ],
+      "kri": "Open commissioning issues by severity"
+    },
+    {
+      "id": "R-CON-06",
+      "category": "CON",
+      "title": "Late design changes",
+      "description": "Tenant platform or density changes after design freeze force rework of electrical and cooling.",
+      "phases": [
+        "construction"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 4,
+      "owner": "Engineering",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "workloadType": [
+              "ai_training"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "GPU generations change density targets"
+        },
+        {
+          "when": {
+            "tenantStatus": [
+              "speculative",
+              "loi"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "No tenant to lock requirements"
+        }
+      ],
+      "mitigations": [
+        "Design freeze gate with tenant sign-off",
+        "Flexible design envelope for density range",
+        "Change impact assessment required before approval"
+      ],
+      "kri": "Design changes after freeze, count and value"
+    },
+    {
+      "id": "R-CON-07",
+      "category": "CON",
+      "title": "Contractor default or insolvency",
+      "description": "GC or key subcontractor fails financially or abandons work.",
+      "phases": [
+        "construction"
+      ],
+      "baseLikelihood": 2,
+      "baseImpact": 5,
+      "owner": "Construction",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "gcStatus": [
+              "selected_general"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Less capitalized for mission-critical scale"
+        }
+      ],
+      "mitigations": [
+        "Payment and performance bonds or subcontractor default insurance",
+        "Financial statements reviewed annually",
+        "Step-in rights and assignment of subcontracts"
+      ],
+      "kri": "GC backlog to working capital ratio"
+    },
+    {
+      "id": "R-CON-08",
+      "category": "CON",
+      "title": "Change orders and claims disputes",
+      "description": "Volume of change orders and unresolved claims escalates to formal dispute.",
+      "phases": [
+        "construction",
+        "commissioning"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 3,
+      "owner": "Construction",
+      "controlType": "detective",
+      "triggers": [
+        {
+          "when": {
+            "contractType": [
+              "lump_sum"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Fixed price incentivizes claims"
+        }
+      ],
+      "mitigations": [
+        "Change order log reviewed weekly with aging",
+        "Dispute resolution ladder and standing neutral",
+        "Documentation standards enforced from notice to proceed"
+      ],
+      "kri": "Unresolved change orders over 30 days"
+    },
+    {
+      "id": "R-CON-09",
+      "category": "CON",
+      "title": "Design density obsolescence",
+      "description": "Rack power density and cooling requirements demanded by tenants at COD exceed the design basis set at design freeze, making the facility less leasable or requiring retrofit.",
+      "phases": [
+        "permitting",
+        "procurement",
+        "construction",
+        "commissioning"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 4,
+      "owner": "Engineering",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "workloadType": [
+              "ai_training"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "GPU generations reset density targets every 12 to 18 months"
+        },
+        {
+          "when": {
+            "tenantStatus": [
+              "speculative",
+              "loi"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "No tenant to lock requirements"
+        },
+        {
+          "when": {
+            "coolingType": [
+              "air"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 1,
+          "note": "Air-cooled design has hard density ceiling"
+        },
+        {
+          "when": {
+            "monthsToCOD": {
+              "gte": 24
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Long horizon between design freeze and delivery"
+        }
+      ],
+      "mitigations": [
+        "Design to a density range with liquid-ready piping stubs and electrical headroom",
+        "Density review gate at each 6-month interval before design freeze",
+        "Lease term allowing tenant-funded retrofit for density above design basis"
+      ],
+      "kri": "Design density (kW/rack) vs. current market requirement for target workload"
+    },
+    {
+      "id": "R-SCH-01",
+      "category": "SCH",
+      "title": "Critical path slip against COD",
+      "description": "Cumulative slip across power, equipment, and commissioning threatens committed delivery.",
+      "phases": [
+        "procurement",
+        "construction",
+        "commissioning"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 4,
+      "owner": "Construction",
+      "controlType": "detective",
+      "triggers": [
+        {
+          "when": {
+            "monthsToCOD": {
+              "lte": 12
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Limited float remaining"
+        },
+        {
+          "when": {
+            "longLeadStatus": [
+              "not_ordered"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Long-lead path not started"
+        },
+        {
+          "when": {
+            "powerStatus": [
+              "unsecured",
+              "in_negotiation"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Energization not committed"
+        }
+      ],
+      "mitigations": [
+        "Integrated master schedule with utility and OEM milestones",
+        "Monthly schedule risk analysis on critical path",
+        "Recovery plan triggers defined by float thresholds"
+      ],
+      "kri": "Total float on critical path, in weeks"
+    },
+    {
+      "id": "R-SCH-02",
+      "category": "SCH",
+      "title": "Tenant delivery liquidated damages",
+      "description": "Missed delivery date triggers lease LDs, rent abatement, or termination rights.",
+      "phases": [
+        "construction",
+        "commissioning"
+      ],
+      "baseLikelihood": 2,
+      "baseImpact": 5,
+      "owner": "Finance",
+      "controlType": "preventive",
+      "activeWhen": {
+        "tenantStatus": [
+          "signed_hyperscale",
+          "signed_colo"
+        ]
+      },
+      "triggers": [
+        {
+          "when": {
+            "tenantStatus": [
+              "signed_hyperscale"
+            ]
+          },
+          "likelihood": 0,
+          "impact": 0,
+          "note": "Hyperscale leases carry termination rights"
+        },
+        {
+          "when": {
+            "monthsToCOD": {
+              "lte": 12
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Near delivery date"
+        }
+      ],
+      "mitigations": [
+        "Grace period and force majeure terms negotiated in lease",
+        "Delay LDs flowed down to GC and OEMs",
+        "Delay-in-startup coverage under builder's risk"
+      ],
+      "kri": "Lease LD exposure per week of delay"
+    },
+    {
+      "id": "R-SCH-03",
+      "category": "SCH",
+      "title": "Weather and seasonal productivity loss",
+      "description": "Hurricane season, extreme heat, or winter conditions reduce productivity and cause stoppages.",
+      "phases": [
+        "construction"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 2,
+      "owner": "Construction",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "state.heat": {
+              "gte": 2
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Extreme heat days"
+        },
+        {
+          "when": {
+            "state.winterStorm": {
+              "gte": 2
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Winter stoppage days"
+        },
+        {
+          "when": {
+            "state.hurricane": {
+              "gte": 2
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Hurricane season shutdowns"
+        }
+      ],
+      "mitigations": [
+        "Weather days built into baseline schedule by month",
+        "Enclosure and conditioning sequenced before winter or summer peaks",
+        "Weather-related delay terms clarified in contract"
+      ],
+      "kri": "Weather days used vs. allowance"
+    },
+    {
+      "id": "R-SCH-04",
+      "category": "SCH",
+      "title": "Commissioning compression",
+      "description": "Schedule pressure shortens Level 4 and 5 commissioning, leaving latent defects into operations.",
+      "phases": [
+        "commissioning"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 4,
+      "owner": "Engineering",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "monthsToCOD": {
+              "lte": 6
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Commissioning window under pressure"
+        },
+        {
+          "when": {
+            "tenantStatus": [
+              "signed_hyperscale"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Delivery pressure from tenant"
+        }
+      ],
+      "mitigations": [
+        "Commissioning duration protected as a non-negotiable in schedule",
+        "Integrated systems test as tenant acceptance milestone",
+        "Cx agent reports directly to owner, not GC"
+      ],
+      "kri": "Planned vs. actual Level 5 duration"
+    },
+    {
+      "id": "R-CST-01",
+      "category": "CST",
+      "title": "Cost escalation and budget overrun",
+      "description": "Material, equipment, and labor escalation exceed budget assumptions.",
+      "phases": [
+        "procurement",
+        "construction"
+      ],
+      "baseLikelihood": 4,
+      "baseImpact": 3,
+      "owner": "Finance",
+      "controlType": "detective",
+      "triggers": [
+        {
+          "when": {
+            "contractType": [
+              "cost_plus"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 1,
+          "note": "Owner absorbs escalation"
+        },
+        {
+          "when": {
+            "longLeadStatus": [
+              "not_ordered"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Equipment pricing not locked"
+        },
+        {
+          "when": {
+            "contractType": [
+              "gmp",
+              "lump_sum"
+            ]
+          },
+          "likelihood": -1,
+          "impact": 0,
+          "note": "Price largely fixed"
+        }
+      ],
+      "mitigations": [
+        "Escalation index tracked monthly against budget assumptions",
+        "Early procurement to lock major equipment pricing",
+        "Value engineering log maintained through design"
+      ],
+      "kri": "Forecast at completion vs. budget, percent variance"
+    },
+    {
+      "id": "R-CST-02",
+      "category": "CST",
+      "title": "Inadequate contingency",
+      "description": "Contingency consumed early by design or site issues, leaving no reserve for construction surprises.",
+      "phases": [
+        "procurement",
+        "construction",
+        "commissioning"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 3,
+      "owner": "Finance",
+      "controlType": "detective",
+      "triggers": [
+        {
+          "when": {
+            "phase": [
+              "construction",
+              "commissioning"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Most contingency draws occur in construction"
+        }
+      ],
+      "mitigations": [
+        "Contingency drawdown curve compared to earned value monthly",
+        "Separate owner, design, and construction contingencies",
+        "Contingency release approval matrix"
+      ],
+      "kri": "Contingency remaining vs. percent complete"
+    },
+    {
+      "id": "R-CST-03",
+      "category": "CST",
+      "title": "Early-stage estimate accuracy",
+      "description": "Class 4 or 5 estimates carry 30 percent or wider ranges; commitments made on them prove optimistic.",
+      "phases": [
+        "site_selection",
+        "permitting",
+        "procurement"
+      ],
+      "baseLikelihood": 4,
+      "baseImpact": 3,
+      "owner": "Finance",
+      "controlType": "preventive",
+      "activeWhen": {
+        "phase": [
+          "site_selection",
+          "permitting",
+          "procurement"
+        ]
+      },
+      "triggers": [],
+      "mitigations": [
+        "Estimate class and accuracy range stated on every budget",
+        "Benchmark against recent comparable projects per MW",
+        "Board approvals staged to estimate maturity"
+      ],
+      "kri": "Estimate class at last approval"
+    },
+    {
+      "id": "R-FIN-01",
+      "category": "FIN",
+      "title": "Financing not closed or capital unavailable",
+      "description": "Debt or equity fails to close on required timeline, or conditions precedent cannot be satisfied.",
+      "phases": [
+        "permitting",
+        "procurement",
+        "construction"
+      ],
+      "baseLikelihood": 2,
+      "baseImpact": 5,
+      "owner": "Finance",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "financing": [
+              "undecided"
+            ]
+          },
+          "likelihood": 2,
+          "impact": 0,
+          "note": "Capital structure not determined"
+        },
+        {
+          "when": {
+            "financing": [
+              "project_finance"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Extensive conditions precedent"
+        },
+        {
+          "when": {
+            "financing": [
+              "equity"
+            ]
+          },
+          "likelihood": -1,
+          "impact": 0,
+          "note": "Balance sheet funded"
+        },
+        {
+          "when": {
+            "tenantStatus": [
+              "speculative"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Lenders require credit tenant"
+        }
+      ],
+      "mitigations": [
+        "Term sheet before major procurement commitments",
+        "Conditions precedent tracker owned by finance",
+        "Equity bridge capacity confirmed for delays"
+      ],
+      "kri": "Open conditions precedent vs. required close date"
+    },
+    {
+      "id": "R-FIN-02",
+      "category": "FIN",
+      "title": "Interest rate exposure",
+      "description": "Floating rate construction debt exposed to rate increases over the build period.",
+      "phases": [
+        "procurement",
+        "construction",
+        "commissioning"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 3,
+      "owner": "Finance",
+      "controlType": "preventive",
+      "activeWhen": {
+        "financing": [
+          "construction_loan",
+          "project_finance"
+        ]
+      },
+      "triggers": [
+        {
+          "when": {
+            "capacityMW": {
+              "gte": 300
+            }
+          },
+          "likelihood": 0,
+          "impact": 1,
+          "note": "Large loan balance amplifies rate sensitivity"
+        }
+      ],
+      "mitigations": [
+        "Interest rate cap or swap on a defined share of notional",
+        "Sensitivity analysis at plus 200 basis points",
+        "Hedge policy approved at investment committee"
+      ],
+      "kri": "Unhedged floating exposure as percent of debt"
+    },
+    {
+      "id": "R-FIN-03",
+      "category": "FIN",
+      "title": "Tenant credit and lease-up",
+      "description": "No signed tenant, weak counterparty credit, or lease terms below underwriting.",
+      "phases": [
+        "site_selection",
+        "permitting",
+        "procurement",
+        "construction",
+        "operations"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 5,
+      "owner": "Finance",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "tenantStatus": [
+              "speculative"
+            ]
+          },
+          "likelihood": 2,
+          "impact": 0,
+          "note": "No tenant commitment"
+        },
+        {
+          "when": {
+            "tenantStatus": [
+              "loi"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Non-binding LOI only"
+        },
+        {
+          "when": {
+            "tenantStatus": [
+              "signed_hyperscale"
+            ]
+          },
+          "likelihood": -2,
+          "impact": 0,
+          "note": "Investment-grade tenant signed"
+        },
+        {
+          "when": {
+            "tenantStatus": [
+              "signed_colo"
+            ]
+          },
+          "likelihood": -1,
+          "impact": 0,
+          "note": "Signed but multi-tenant credit"
+        }
+      ],
+      "mitigations": [
+        "Credit review and parent guarantee for non-investment-grade tenants",
+        "Phased construction gated on lease execution",
+        "Security deposit or letter of credit sized to re-tenanting cost"
+      ],
+      "kri": "Contracted MW vs. built MW"
+    },
+    {
+      "id": "R-FIN-04",
+      "category": "FIN",
+      "title": "Power price exposure and hedging",
+      "description": "Energy cost exposed to market volatility where lease passes through power at cost or operator bears energy risk.",
+      "phases": [
+        "permitting",
+        "operations"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 3,
+      "owner": "Finance",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "state.priceVolatility": {
+              "gte": 2
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Volatile wholesale market"
+        },
+        {
+          "when": {
+            "powerStatus": [
+              "utility_agreement"
+            ]
+          },
+          "likelihood": 0,
+          "impact": 0,
+          "note": "Tariff-based supply; rate case exposure"
+        },
+        {
+          "when": {
+            "tenantStatus": [
+              "speculative",
+              "loi"
+            ]
+          },
+          "likelihood": 0,
+          "impact": 1,
+          "note": "Pass-through not yet contracted"
+        }
+      ],
+      "mitigations": [
+        "Power pass-through in lease with defined mechanism",
+        "Fixed-price PPA or block hedge for owner-borne load",
+        "Hedge policy defining tenor and coverage ratio"
+      ],
+      "kri": "Percent of load with fixed price or pass-through"
+    },
+    {
+      "id": "R-FIN-05",
+      "category": "FIN",
+      "title": "Currency exposure on imported equipment",
+      "description": "Equipment contracts denominated in foreign currency move against budget between award and payment.",
+      "phases": [
+        "procurement",
+        "construction"
+      ],
+      "baseLikelihood": 2,
+      "baseImpact": 2,
+      "owner": "Finance",
+      "controlType": "preventive",
+      "triggers": [],
+      "mitigations": [
+        "USD-denominated contracts where possible",
+        "FX forwards for material foreign-currency commitments",
+        "FX exposure reported in monthly cost report"
+      ],
+      "kri": "Unhedged foreign-currency commitments in USD"
+    },
+    {
+      "id": "R-FIN-06",
+      "category": "FIN",
+      "title": "Market absorption and valuation",
+      "description": "Softening demand, cap rate expansion, or new supply erodes exit value and refinancing capacity.",
+      "phases": [
+        "site_selection",
+        "operations"
+      ],
+      "baseLikelihood": 2,
+      "baseImpact": 4,
+      "owner": "Finance",
+      "controlType": "detective",
+      "triggers": [
+        {
+          "when": {
+            "tenantStatus": [
+              "speculative"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Fully exposed to market"
+        }
+      ],
+      "mitigations": [
+        "Market supply pipeline tracked quarterly",
+        "Underwriting sensitivity on cap rate and rent",
+        "Lease term aligned with debt maturity"
+      ],
+      "kri": "Pipeline MW under construction in market vs. absorption"
+    },
+    {
+      "id": "R-FIN-07",
+      "category": "FIN",
+      "title": "Liquidity and draw timing",
+      "description": "Lender draw conditions, retainage, and payment timing strain project cash flow.",
+      "phases": [
+        "construction",
+        "commissioning"
+      ],
+      "baseLikelihood": 2,
+      "baseImpact": 3,
+      "owner": "Finance",
+      "controlType": "detective",
+      "activeWhen": {
+        "financing": [
+          "construction_loan",
+          "project_finance"
+        ]
+      },
+      "triggers": [],
+      "mitigations": [
+        "Monthly cash flow forecast reconciled to draw schedule",
+        "Lender inspector aligned with pay application cycle",
+        "Working capital reserve for draw delays"
+      ],
+      "kri": "Days from pay application to funding"
+    },
+    {
+      "id": "R-OPS-01",
+      "category": "OPS",
+      "title": "Utility outage and grid instability",
+      "description": "Grid events (winter storms, heat waves, transmission faults) interrupt supply beyond backup design.",
+      "phases": [
+        "commissioning",
+        "operations"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 4,
+      "owner": "Operations",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "state.winterStorm": {
+              "gte": 2
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Winter grid stress history"
+        },
+        {
+          "when": {
+            "state.heat": {
+              "gte": 2
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Summer peak demand stress"
+        },
+        {
+          "when": {
+            "redundancy": [
+              "n"
+            ]
+          },
+          "likelihood": 0,
+          "impact": 1,
+          "note": "No redundant path"
+        }
+      ],
+      "mitigations": [
+        "Dual utility feeds from separate substations where feasible",
+        "Generator runtime and fuel contracts sized for 72-hour events",
+        "Monthly load bank and transfer testing"
+      ],
+      "kri": "Utility events per year and longest duration"
+    },
+    {
+      "id": "R-OPS-02",
+      "category": "OPS",
+      "title": "Cooling failure or thermal event",
+      "description": "Loss of cooling at high density causes rapid thermal excursion and IT shutdown.",
+      "phases": [
+        "commissioning",
+        "operations"
+      ],
+      "baseLikelihood": 2,
+      "baseImpact": 5,
+      "owner": "Operations",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "coolingType": [
+              "liquid",
+              "hybrid"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Leak and pump failure modes"
+        },
+        {
+          "when": {
+            "workloadType": [
+              "ai_training"
+            ]
+          },
+          "likelihood": 0,
+          "impact": 0,
+          "note": "Minutes of thermal ride-through at high density"
+        },
+        {
+          "when": {
+            "redundancy": [
+              "n"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "No mechanical redundancy"
+        }
+      ],
+      "mitigations": [
+        "Thermal ride-through analysis and chilled water storage",
+        "Leak detection and automatic isolation on liquid loops",
+        "Concurrent maintainability verified in commissioning"
+      ],
+      "kri": "Thermal ride-through time at design load"
+    },
+    {
+      "id": "R-OPS-03",
+      "category": "OPS",
+      "title": "Single points of failure in topology",
+      "description": "Redundancy level or design leaves single points of failure in power or cooling distribution.",
+      "phases": [
+        "permitting",
+        "construction",
+        "operations"
+      ],
+      "baseLikelihood": 2,
+      "baseImpact": 5,
+      "owner": "Engineering",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "redundancy": [
+              "n"
+            ]
+          },
+          "likelihood": 2,
+          "impact": 0,
+          "note": "N topology by design"
+        },
+        {
+          "when": {
+            "redundancy": [
+              "n_plus_1"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Shared distribution paths"
+        },
+        {
+          "when": {
+            "redundancy": [
+              "2n"
+            ]
+          },
+          "likelihood": -1,
+          "impact": 0,
+          "note": "Fully redundant paths"
+        }
+      ],
+      "mitigations": [
+        "Failure mode and effects analysis on one-line and P&IDs",
+        "Tenant SLA aligned to actual topology",
+        "Concurrent maintainability procedures documented"
+      ],
+      "kri": "Open single points of failure from FMEA"
+    },
+    {
+      "id": "R-OPS-04",
+      "category": "OPS",
+      "title": "Fuel supply during extended outage",
+      "description": "Diesel or gas supply cannot sustain generation through multi-day regional events.",
+      "phases": [
+        "operations"
+      ],
+      "baseLikelihood": 2,
+      "baseImpact": 4,
+      "owner": "Operations",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "state.hurricane": {
+              "gte": 2
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Regional fuel logistics disrupted in storms"
+        },
+        {
+          "when": {
+            "state.winterStorm": {
+              "gte": 2
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Gas supply curtailment in winter events"
+        }
+      ],
+      "mitigations": [
+        "Onsite storage for 48 to 72 hours at full load",
+        "Priority fuel delivery contracts with two suppliers",
+        "Fuel quality testing and polishing program"
+      ],
+      "kri": "Hours of onsite fuel at full load"
+    },
+    {
+      "id": "R-OPS-05",
+      "category": "OPS",
+      "title": "Operations staffing and procedures",
+      "description": "Insufficient trained staff, or incomplete MOPs, SOPs, and EOPs at handover.",
+      "phases": [
+        "commissioning",
+        "operations"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 3,
+      "owner": "Operations",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "state.laborTightness": {
+              "gte": 2
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Critical facilities technicians scarce"
+        },
+        {
+          "when": {
+            "coolingType": [
+              "liquid",
+              "hybrid"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "New skills required for liquid systems"
+        }
+      ],
+      "mitigations": [
+        "Operations team onboarded during Level 4 commissioning",
+        "Procedure library complete before tenant acceptance",
+        "Human error tracked as a leading indicator"
+      ],
+      "kri": "Procedures complete vs. required at handover"
+    },
+    {
+      "id": "R-OPS-06",
+      "category": "OPS",
+      "title": "Business continuity and disaster recovery gaps",
+      "description": "BC/DR plan absent, outdated, or untested; recovery time and communications undefined.",
+      "phases": [
+        "commissioning",
+        "operations"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 4,
+      "owner": "Operations",
+      "controlType": "corrective",
+      "triggers": [
+        {
+          "when": {
+            "bcdrStatus": [
+              "none"
+            ]
+          },
+          "likelihood": 2,
+          "impact": 0,
+          "note": "No plan exists"
+        },
+        {
+          "when": {
+            "bcdrStatus": [
+              "drafted"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Plan not exercised"
+        },
+        {
+          "when": {
+            "bcdrStatus": [
+              "tested"
+            ]
+          },
+          "likelihood": -2,
+          "impact": 0,
+          "note": "Plan tested within 12 months"
+        }
+      ],
+      "mitigations": [
+        "BC/DR plan covering utility loss, fire, cyber, and regional events",
+        "Annual tabletop and one live exercise",
+        "Crisis communication tree with tenant contacts"
+      ],
+      "kri": "Months since last BC/DR exercise"
+    },
+    {
+      "id": "R-OPS-07",
+      "category": "OPS",
+      "title": "SLA breach and uptime penalties",
+      "description": "Availability shortfall triggers service credits, termination rights, or reputational damage.",
+      "phases": [
+        "operations"
+      ],
+      "baseLikelihood": 2,
+      "baseImpact": 4,
+      "owner": "Operations",
+      "controlType": "detective",
+      "activeWhen": {
+        "tenantStatus": [
+          "signed_hyperscale",
+          "signed_colo"
+        ]
+      },
+      "triggers": [
+        {
+          "when": {
+            "redundancy": [
+              "n"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Topology below typical SLA expectation"
+        },
+        {
+          "when": {
+            "tenantStatus": [
+              "signed_hyperscale"
+            ]
+          },
+          "likelihood": 0,
+          "impact": 1,
+          "note": "Stringent SLA terms"
+        }
+      ],
+      "mitigations": [
+        "SLA terms matched to designed availability",
+        "Incident management and root cause process",
+        "Availability tracked monthly against SLA thresholds"
+      ],
+      "kri": "Availability year to date vs. SLA"
+    },
+    {
+      "id": "R-OPS-08",
+      "category": "OPS",
+      "title": "Physical security breach",
+      "description": "Unauthorized access, theft, or sabotage compromises tenant environment.",
+      "phases": [
+        "construction",
+        "operations"
+      ],
+      "baseLikelihood": 2,
+      "baseImpact": 4,
+      "owner": "Security",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "tenantStatus": [
+              "signed_hyperscale"
+            ]
+          },
+          "likelihood": 0,
+          "impact": 1,
+          "note": "Tenant security requirements are contractual"
+        }
+      ],
+      "mitigations": [
+        "Layered perimeter, mantrap, and biometric access",
+        "Security operations center with 24/7 monitoring",
+        "Construction-phase site security and equipment theft controls"
+      ],
+      "kri": "Access control exceptions per month"
+    },
+    {
+      "id": "R-OPS-09",
+      "category": "OPS",
+      "title": "Water supply interruption",
+      "description": "Municipal or well supply interrupted, forcing reduced cooling capacity.",
+      "phases": [
+        "operations"
+      ],
+      "baseLikelihood": 2,
+      "baseImpact": 4,
+      "owner": "Operations",
+      "controlType": "preventive",
+      "activeWhen": {
+        "waterSource": [
+          "municipal",
+          "groundwater",
+          "reclaimed"
+        ]
+      },
+      "triggers": [
+        {
+          "when": {
+            "state.waterStress": {
+              "gte": 2
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Drought restrictions possible"
+        }
+      ],
+      "mitigations": [
+        "Onsite water storage for 24 to 48 hours",
+        "Dry-mode operating procedure at reduced load",
+        "Secondary supply agreement or trucking contract"
+      ],
+      "kri": "Hours of onsite water storage at design load"
+    },
+    {
+      "id": "R-SEC-01",
+      "category": "SEC",
+      "title": "SOC 2 or ISO 27001 readiness gap",
+      "description": "Tenant or lender requires attestation the facility cannot deliver by go-live.",
+      "phases": [
+        "construction",
+        "commissioning",
+        "operations"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 3,
+      "owner": "Compliance",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "complianceStatus": [
+              "not_started"
+            ]
+          },
+          "likelihood": 2,
+          "impact": 0,
+          "note": "No readiness program"
+        },
+        {
+          "when": {
+            "complianceStatus": [
+              "in_progress"
+            ]
+          },
+          "likelihood": 0,
+          "impact": 0,
+          "note": "Readiness under way"
+        },
+        {
+          "when": {
+            "complianceStatus": [
+              "certified"
+            ]
+          },
+          "likelihood": -2,
+          "impact": 0,
+          "note": "Attestation in place"
+        },
+        {
+          "when": {
+            "tenantStatus": [
+              "signed_hyperscale"
+            ]
+          },
+          "likelihood": 0,
+          "impact": 1,
+          "note": "Attestation is a lease condition"
+        }
+      ],
+      "mitigations": [
+        "Readiness assessment 12 months before go-live",
+        "Control owners assigned across facilities, security, and IT",
+        "Audit period and report type agreed with tenant"
+      ],
+      "kri": "Open control gaps vs. audit start date"
+    },
+    {
+      "id": "R-SEC-02",
+      "category": "SEC",
+      "title": "OT and building system cybersecurity",
+      "description": "BMS, DCIM, and electrical controls exposed to cyber intrusion affecting availability.",
+      "phases": [
+        "construction",
+        "commissioning",
+        "operations"
+      ],
+      "baseLikelihood": 2,
+      "baseImpact": 5,
+      "owner": "Security",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "complianceStatus": [
+              "not_started"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "No control framework applied to OT"
+        }
+      ],
+      "mitigations": [
+        "OT network segmentation and NIST CSF-aligned controls",
+        "Vendor remote access governed and logged",
+        "OT asset inventory and patch program"
+      ],
+      "kri": "OT assets with known unpatched critical vulnerabilities"
+    },
+    {
+      "id": "R-SEC-03",
+      "category": "SEC",
+      "title": "Environmental compliance violation",
+      "description": "SWPPP, SPCC, air permit run-hour, or noise conditions violated during construction or operations.",
+      "phases": [
+        "construction",
+        "operations"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 2,
+      "owner": "Compliance",
+      "controlType": "detective",
+      "triggers": [
+        {
+          "when": {
+            "powerSource": [
+              "onsite_gas",
+              "hybrid"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 1,
+          "note": "Continuous emissions compliance obligations"
+        }
+      ],
+      "mitigations": [
+        "Permit condition register with named owners",
+        "Monthly compliance inspection and reporting",
+        "Generator run-hour tracking automated"
+      ],
+      "kri": "Open notices of violation"
+    },
+    {
+      "id": "R-SEC-04",
+      "category": "SEC",
+      "title": "Audit and contract compliance findings",
+      "description": "Internal, lender, or tenant audits identify gaps in documentation, vendor SOC reports, or contract obligations.",
+      "phases": [
+        "procurement",
+        "construction",
+        "operations"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 2,
+      "owner": "Compliance",
+      "controlType": "detective",
+      "triggers": [
+        {
+          "when": {
+            "financing": [
+              "project_finance"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Lender reporting covenants"
+        }
+      ],
+      "mitigations": [
+        "Obligations register from lease, loan, and utility agreements",
+        "Vendor SOC report collection annually",
+        "Audit findings tracked to closure"
+      ],
+      "kri": "Audit findings open over 90 days"
+    },
+    {
+      "id": "R-INS-01",
+      "category": "INS",
+      "title": "Builder's risk coverage gaps",
+      "description": "Builder's risk limits, natural catastrophe sublimits, testing coverage, or delay-in-startup inadequate for exposure.",
+      "phases": [
+        "procurement",
+        "construction",
+        "commissioning"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 4,
+      "owner": "Risk",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "insuranceStatus": [
+              "not_started"
+            ]
+          },
+          "likelihood": 2,
+          "impact": 0,
+          "note": "Program not placed"
+        },
+        {
+          "when": {
+            "insuranceStatus": [
+              "in_progress"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Placement under way"
+        },
+        {
+          "when": {
+            "insuranceStatus": [
+              "placed"
+            ]
+          },
+          "likelihood": -2,
+          "impact": 0,
+          "note": "Program bound"
+        },
+        {
+          "when": {
+            "state.hurricane": {
+              "gte": 2
+            }
+          },
+          "likelihood": 0,
+          "impact": 1,
+          "note": "Named-storm sublimits and deductibles"
+        }
+      ],
+      "mitigations": [
+        "Placement 90 days before notice to proceed",
+        "Hot testing and commissioning coverage confirmed",
+        "Delay-in-startup sized to lease LD exposure"
+      ],
+      "kri": "Nat cat sublimit vs. probable maximum loss"
+    },
+    {
+      "id": "R-INS-02",
+      "category": "INS",
+      "title": "Property and business interruption at operations",
+      "description": "Operational property program capacity, valuation, and BI period insufficient for high total insured value.",
+      "phases": [
+        "commissioning",
+        "operations"
+      ],
+      "baseLikelihood": 2,
+      "baseImpact": 4,
+      "owner": "Risk",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "capacityMW": {
+              "gte": 300
+            }
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "TIV strains market capacity"
+        },
+        {
+          "when": {
+            "workloadType": [
+              "ai_training",
+              "hpc"
+            ]
+          },
+          "likelihood": 0,
+          "impact": 1,
+          "note": "GPU contents value very high"
+        }
+      ],
+      "mitigations": [
+        "Transition from builder's risk to property program planned 6 months out",
+        "Statement of values updated at each phase",
+        "Contingent BI for utility service interruption"
+      ],
+      "kri": "Insured value vs. replacement cost estimate"
+    },
+    {
+      "id": "R-INS-03",
+      "category": "INS",
+      "title": "Contractor insurance and wrap-up structure",
+      "description": "OCIP or CCIP structure, subcontractor compliance, and additional insured status leave gaps.",
+      "phases": [
+        "procurement",
+        "construction"
+      ],
+      "baseLikelihood": 3,
+      "baseImpact": 3,
+      "owner": "Risk",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "insuranceStatus": [
+              "not_started"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Structure not decided"
+        }
+      ],
+      "mitigations": [
+        "Wrap-up decision made before GC award",
+        "Certificate tracking for all tiers",
+        "Contractual indemnity aligned to insurance"
+      ],
+      "kri": "Subcontractors non-compliant with insurance requirements"
+    },
+    {
+      "id": "R-INS-04",
+      "category": "INS",
+      "title": "Claims management and recovery",
+      "description": "Poor documentation or late notice reduces recovery on property, delay, or liability claims.",
+      "phases": [
+        "construction",
+        "operations"
+      ],
+      "baseLikelihood": 2,
+      "baseImpact": 3,
+      "owner": "Risk",
+      "controlType": "corrective",
+      "triggers": [],
+      "mitigations": [
+        "Incident reporting protocol with notice timelines",
+        "Cost tracking codes for claim-related spend",
+        "Claims advocate engaged with broker"
+      ],
+      "kri": "Days from incident to carrier notice"
+    },
+    {
+      "id": "R-INS-05",
+      "category": "INS",
+      "title": "Cyber insurance availability and exclusions",
+      "description": "Cyber coverage limited or excludes OT and infrastructure events; tenant may require specific limits.",
+      "phases": [
+        "commissioning",
+        "operations"
+      ],
+      "baseLikelihood": 2,
+      "baseImpact": 3,
+      "owner": "Risk",
+      "controlType": "preventive",
+      "triggers": [
+        {
+          "when": {
+            "complianceStatus": [
+              "not_started"
+            ]
+          },
+          "likelihood": 1,
+          "impact": 0,
+          "note": "Underwriters require control evidence"
+        }
+      ],
+      "mitigations": [
+        "Cyber controls documented for underwriting",
+        "OT and infrastructure exclusions negotiated",
+        "Limits aligned to tenant contract requirements"
+      ],
+      "kri": "Cyber limit vs. tenant contractual requirement"
+    }
+  ]
+}

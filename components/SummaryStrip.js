@@ -8,6 +8,10 @@ export default function SummaryStrip({ summary, ctx }) {
   
     const cell = { padding: "16px 20px", borderLeft: "1px solid var(--line)" };
   
+    const m = ctx.monthsToCOD;
+    const codLabel =
+      m == null ? "No COD set" : m >= 0 ? `${m} mo to COD` : `${Math.abs(m)} mo since COD`;
+  
     return (
       <div
         className="panel"
@@ -31,9 +35,7 @@ export default function SummaryStrip({ summary, ctx }) {
         <div style={cell}>
           <p className="eyebrow">Avg score</p>
           <p className="mono mt-1 text-[28px] leading-none">{summary.avgScore}</p>
-          <p className="mt-1.5 text-[11px] text-ink-3">
-            {ctx.monthsToCOD != null ? `${ctx.monthsToCOD} mo to COD` : "No COD set"}
-          </p>
+          <p className="mt-1.5 text-[11px] text-ink-3">{codLabel}</p>
         </div>
       </div>
     );

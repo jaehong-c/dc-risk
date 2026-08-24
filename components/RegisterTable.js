@@ -6,7 +6,7 @@ import { CATEGORIES } from "@/lib/scoring";
 const CHIP = { low: "chip-low", medium: "chip-med", high: "chip-high", critical: "chip-crit" };
 const STATUS_LABEL = { active: "Active", upcoming: "Upcoming", retired: "Retired" };
 
-export default function RegisterTable({ risks, selectedCell }) {
+export default function RegisterTable({ risks, selectedCell, onExport }) {
   const [status, setStatus] = useState("active");
   const [category, setCategory] = useState("all");
   const [open, setOpen] = useState(null);
@@ -21,13 +21,13 @@ export default function RegisterTable({ risks, selectedCell }) {
   return (
     <div>
       <div className="mb-4 flex items-center gap-3">
-        <select className="field-select w-[140px]" value={status} onChange={(e) => setStatus(e.target.value)}>
+        <select className="field-select" style={{ width: 150 }} value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="active">Active</option>
           <option value="upcoming">Upcoming</option>
           <option value="retired">Retired</option>
           <option value="all">All statuses</option>
         </select>
-        <select className="field-select w-[220px]" value={category} onChange={(e) => setCategory(e.target.value)}>
+        <select className="field-select" style={{ width: 240 }} value={category} onChange={(e) => setCategory(e.target.value)}>
           <option value="all">All categories</option>
           {Object.entries(CATEGORIES).map(([k, v]) => (
             <option key={k} value={k}>{v}</option>
@@ -39,6 +39,9 @@ export default function RegisterTable({ risks, selectedCell }) {
           </span>
         )}
         <span className="mono ml-auto text-[11px] text-ink-3">{rows.length} rows</span>
+        <button type="button" className="btn-ghost" onClick={() => onExport(rows)}>
+          Export CSV
+        </button>
       </div>
 
       <table className="w-full border-collapse text-[12.5px]">
@@ -69,10 +72,7 @@ export default function RegisterTable({ risks, selectedCell }) {
 function RowGroup({ r, open, onToggle }) {
   return (
     <>
-      <tr
-        className="cursor-pointer border-b border-line hover:bg-surface-2"
-        onClick={onToggle}
-      >
+      <tr className="cursor-pointer border-b border-line hover:bg-surface-2" onClick={onToggle}>
         <td className="mono py-2.5 pr-3 text-ink-2">{r.id}</td>
         <td className="py-2.5 pr-3">{r.title}</td>
         <td className="py-2.5 pr-3 text-ink-2">{r.categoryName}</td>
@@ -84,9 +84,9 @@ function RowGroup({ r, open, onToggle }) {
         <td className="py-2.5 text-ink-3">{STATUS_LABEL[r.status]}</td>
       </tr>
       {open && (
-        <tr className="border-b border-line bg-surface-2/60">
+        <tr className="border-b border-line" style={{ background: "var(--surface-2)" }}>
           <td colSpan={9} className="px-4 py-4">
-            <div className="grid grid-cols-[1.2fr_1fr_1fr] gap-6 text-[12px]">
+            <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr", gap: 24 }} className="text-[12px]">
               <div>
                 <p className="eyebrow mb-1.5">Description</p>
                 <p className="text-ink-2">{r.description}</p>

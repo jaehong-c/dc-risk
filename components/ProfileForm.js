@@ -64,7 +64,7 @@ export default function ProfileForm({ profile, onChange, onLoadPreset, onRun, ru
             <button
               key={i}
               type="button"
-              className="btn-ghost text-left"
+              className="btn-ghost wrap text-left"
               onClick={() => onLoadPreset(p.profile)}
             >
               {p.label}

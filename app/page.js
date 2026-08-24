@@ -5,7 +5,9 @@ import ProfileForm from "@/components/ProfileForm";
 import SummaryStrip from "@/components/SummaryStrip";
 import HeatMatrix from "@/components/HeatMatrix";
 import RegisterTable from "@/components/RegisterTable";
+import MemoPanel from "@/components/MemoPanel";
 import { EMPTY_PROFILE, PRESETS } from "@/lib/presets";
+import { risksToCsv, downloadText } from "@/lib/exportCsv";
 
 export default function Home() {
   const [profile, setProfile] = useState(PRESETS[0].profile);
@@ -14,10 +16,16 @@ export default function Home() {
   const [error, setError] = useState(null);
   const [selectedCell, setSelectedCell] = useState(null);
 
+  const [memo, setMemo] = useState("");
+  const [memoLoading, setMemoLoading] = useState(false);
+  const [memoError, setMemoError] = useState(null);
+
   async function run() {
     setRunning(true);
     setError(null);
     setSelectedCell(null);
+    setMemo("");
+    setMemoError(null);
     try {
       const res = await fetch("/api/score", {
         method: "POST",
@@ -25,12 +33,48 @@ export default function Home() {
         body: JSON.stringify(profile),
       });
       if (!res.ok) throw new Error(`Scoring failed (${res.status})`);
-      setResult(await res.json());
+      const data = await res.json();
+      setResult(data);
+      generateMemoFor(data);
     } catch (e) {
       setError(e.message);
     } finally {
       setRunning(false);
     }
+  }
+
+  async function generateMemoFor(data) {
+    setMemoLoading(true);
+    setMemoError(null);
+    try {
+      const res = await fetch("/api/memo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || `Memo failed (${res.status})`);
+      setMemo(json.memo);
+    } catch (e) {
+      setMemoError(e.message);
+    } finally {
+      setMemoLoading(false);
+    }
+  }
+
+  function generateMemo() {
+    if (result) generateMemoFor(result);
+  }
+
+  function exportRows(rows) {
+    const slug = (result.ctx.name || "project").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    downloadText(`${slug}-risk-register.csv`, risksToCsv(rows, result.ctx));
+  }
+
+  async function copyMemo() {
+    try {
+      await navigator.clipboard.writeText(memo);
+    } catch {}
   }
 
   return (
@@ -76,7 +120,10 @@ export default function Home() {
 
         <section className="flex flex-col gap-5">
           {error && (
-            <div className="panel px-5 py-3 text-[13px]" style={{ borderColor: "var(--risk-high)", color: "var(--risk-high)" }}>
+            <div
+              className="panel px-5 py-3 text-[13px]"
+              style={{ borderColor: "var(--risk-high)", color: "var(--risk-high)" }}
+            >
               {error}
             </div>
           )}
@@ -110,9 +157,21 @@ export default function Home() {
                 />
               </div>
 
+              <MemoPanel
+                memo={memo}
+                loading={memoLoading}
+                error={memoError}
+                onGenerate={generateMemo}
+                onCopy={copyMemo}
+              />
+
               <div className="panel p-5">
                 <p className="eyebrow mb-4">Register</p>
-                <RegisterTable risks={result.risks} selectedCell={selectedCell} />
+                <RegisterTable
+                  risks={result.risks}
+                  selectedCell={selectedCell}
+                  onExport={exportRows}
+                />
               </div>
             </>
           )}
@@ -120,9 +179,12 @@ export default function Home() {
       </div>
 
       <footer className="mx-auto max-w-[1440px] px-6 pb-8 pt-2 text-[11px] text-ink-3">
-        Risk library and state ratings are curated by the author for this prototype and are not
-        sourced from proprietary company data. Scores are rule-based; replace with project-specific
-        assessments for production use.
+        <p>
+          Risk library and state ratings are curated by the author for this prototype and are not
+          sourced from proprietary company data. Scores are rule-based; replace with project-specific
+          assessments for production use.
+        </p>
+        <p className="mt-2">© 2026 Jae Chung. All rights reserved.</p>
       </footer>
     </main>
   );

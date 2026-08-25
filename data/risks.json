@@ -1,6 +1,6 @@
 {
   "meta": {
-    "version": "0.1",
+    "version": "0.1.1",
     "note": "Curated prototype risk library for data center development and operations. Base scores and trigger rules reflect the author's judgment informed by public industry sources, not proprietary company data. Likelihood and impact are scored 1 to 5; score = likelihood x impact.",
     "scale": {
       "likelihood": {
@@ -622,7 +622,7 @@
         "construction",
         "commissioning"
       ],
-      "baseLikelihood": 3,
+      "baseLikelihood": 2,
       "baseImpact": 4,
       "owner": "Engineering",
       "controlType": "preventive",
@@ -900,6 +900,16 @@
           "likelihood": 1,
           "impact": 0,
           "note": "Severely constrained market; multi-year queue"
+        },
+        {
+          "when": {
+            "powerStatus": [
+              "utility_agreement"
+            ]
+          },
+          "likelihood": -1,
+          "impact": 0,
+          "note": "Utility agreement in place; energization date contractual but not firm"
         }
       ],
       "mitigations": [
@@ -1015,6 +1025,16 @@
           "likelihood": 1,
           "impact": 0,
           "note": "Utility construction backlog"
+        },
+        {
+          "when": {
+            "powerStatus": [
+              "utility_agreement"
+            ]
+          },
+          "likelihood": -1,
+          "impact": 0,
+          "note": "Utility agreement in place; energization date contractual but not firm"
         }
       ],
       "mitigations": [
@@ -2224,7 +2244,7 @@
         "construction",
         "operations"
       ],
-      "baseLikelihood": 3,
+      "baseLikelihood": 2,
       "baseImpact": 5,
       "owner": "Finance",
       "controlType": "preventive",
@@ -2286,7 +2306,7 @@
         "permitting",
         "operations"
       ],
-      "baseLikelihood": 3,
+      "baseLikelihood": 2,
       "baseImpact": 3,
       "owner": "Finance",
       "controlType": "preventive",
@@ -2419,7 +2439,7 @@
         "commissioning",
         "operations"
       ],
-      "baseLikelihood": 3,
+      "baseLikelihood": 2,
       "baseImpact": 4,
       "owner": "Operations",
       "controlType": "preventive",
@@ -2525,7 +2545,7 @@
         "construction",
         "operations"
       ],
-      "baseLikelihood": 2,
+      "baseLikelihood": 1,
       "baseImpact": 5,
       "owner": "Engineering",
       "controlType": "preventive",
@@ -2576,7 +2596,7 @@
       "phases": [
         "operations"
       ],
-      "baseLikelihood": 2,
+      "baseLikelihood": 1,
       "baseImpact": 4,
       "owner": "Operations",
       "controlType": "preventive",
@@ -2618,7 +2638,7 @@
         "commissioning",
         "operations"
       ],
-      "baseLikelihood": 3,
+      "baseLikelihood": 2,
       "baseImpact": 3,
       "owner": "Operations",
       "controlType": "preventive",
@@ -2894,7 +2914,7 @@
         "commissioning",
         "operations"
       ],
-      "baseLikelihood": 2,
+      "baseLikelihood": 1,
       "baseImpact": 5,
       "owner": "Security",
       "controlType": "preventive",

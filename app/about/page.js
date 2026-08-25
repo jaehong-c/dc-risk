@@ -1,268 +1,138 @@
-"use client";
-
-import { useMemo, useState } from "react";
 import Header from "@/components/Header";
-import ProfileForm from "@/components/ProfileForm";
-import SummaryStrip from "@/components/SummaryStrip";
-import HeatMatrix from "@/components/HeatMatrix";
-import DataGaps from "@/components/DataGaps";
-import RegisterTable from "@/components/RegisterTable";
-import AuditLog from "@/components/AuditLog";
-import MemoPanel from "@/components/MemoPanel";
-import { EMPTY_PROFILE, PRESETS } from "@/lib/presets";
-import { applyOverrides } from "@/lib/scoring";
-import { risksToCsv, downloadText } from "@/lib/exportCsv";
 
-export default function Home() {
-  const [profile, setProfile] = useState(PRESETS[0].profile);
-  const [raw, setRaw] = useState(null);
-  const [running, setRunning] = useState(false);
-  const [error, setError] = useState(null);
-  const [selectedCell, setSelectedCell] = useState(null);
+export const metadata = {
+  title: "About · DC Risk Register",
+  description:
+    "Methodology, scoring logic, data sources, and roadmap for the DC Risk Register.",
+};
 
-  const [reviewer, setReviewer] = useState("");
-  const [overrides, setOverrides] = useState({});
-  const [auditLog, setAuditLog] = useState([]);
+const CATEGORIES = [
+  ["SIT", "Site & land", "Title, zoning, geotechnical, natural hazards, water"],
+  ["PRM", "Permitting & entitlements", "Land use, environmental, air, stormwater, community"],
+  ["PWR", "Power & utility", "Interconnection queue, capacity, tariff, curtailment, ERCOT/PJM exposure"],
+  ["SCM", "Supply chain", "Transformers, switchgear, generators, chillers, GPU lead times"],
+  ["CON", "Construction", "GC capacity, labor, weather, commissioning, change orders"],
+  ["SCH", "Schedule", "COD slippage, critical path, tenant milestones"],
+  ["CST", "Cost", "Escalation, contingency adequacy, tariff exposure"],
+  ["FIN", "Financing & market", "Rate, pre-lease coverage, counterparty, exit assumptions"],
+  ["OPS", "Operations", "Uptime, PUE, water use, staffing, maintenance"],
+  ["SEC", "Security & compliance", "Physical, cyber, regulatory, ESG reporting"],
+  ["INS", "Insurance & liability", "Builder's risk, property, catastrophe coverage gaps"],
+];
 
-  const [memo, setMemo] = useState("");
-  const [memoLoading, setMemoLoading] = useState(false);
-  const [memoError, setMemoError] = useState(null);
+const ROADMAP = [
+  "Replace curated state grades with FEMA National Risk Index county-level data",
+  "Nominatim geocoding and Leaflet map for site context",
+  "Saved registers with month-over-month score change tracking",
+  "PDF export of the register and leadership memo",
+  "Risk library calibration against additional real-world project profiles",
+];
 
-  const result = useMemo(() => applyOverrides(raw, overrides), [raw, overrides]);
+function Section({ eyebrow, children }) {
+  return (
+    <section className="panel p-6">
+      <p className="eyebrow mb-3">{eyebrow}</p>
+      {children}
+    </section>
+  );
+}
 
-  async function run() {
-    setRunning(true);
-    setError(null);
-    setSelectedCell(null);
-    setMemo("");
-    setMemoError(null);
-    try {
-      const res = await fetch("/api/score", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(profile),
-      });
-      if (!res.ok) throw new Error(`Scoring failed (${res.status})`);
-      const data = await res.json();
-      setRaw(data);
-      generateMemoFor(applyOverrides(data, overrides));
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setRunning(false);
-    }
-  }
-
-  async function generateMemoFor(data) {
-    setMemoLoading(true);
-    setMemoError(null);
-    try {
-      const res = await fetch("/api/memo", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, auditLog }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || `Memo failed (${res.status})`);
-      setMemo(json.memo);
-    } catch (e) {
-      setMemoError(e.message);
-    } finally {
-      setMemoLoading(false);
-    }
-  }
-
-  function generateMemo() {
-    if (result) generateMemoFor(result);
-  }
-
-  function handleOverride(riskId, { likelihood, impact, reason }) {
-    const r = result.risks.find((x) => x.id === riskId);
-    const at = new Date().toISOString();
-    const by = reviewer.trim() || "Unnamed reviewer";
-    const entry = {
-      at,
-      by,
-      riskId,
-      action: r.overridden ? "Update override" : "Override",
-      from: { likelihood: r.likelihood, impact: r.impact },
-      to: { likelihood, impact },
-      reason,
-    };
-    setOverrides({ ...overrides, [riskId]: { likelihood, impact, reason, by, at } });
-    setAuditLog([...auditLog, entry]);
-  }
-
-  function handleRevert(riskId) {
-    const r = result.risks.find((x) => x.id === riskId);
-    const next = { ...overrides };
-    delete next[riskId];
-    setOverrides(next);
-    setAuditLog([
-      ...auditLog,
-      {
-        at: new Date().toISOString(),
-        by: reviewer.trim() || "Unnamed reviewer",
-        riskId,
-        action: "Revert to rule",
-        from: { likelihood: r.likelihood, impact: r.impact },
-        to: { likelihood: r.ruleLikelihood, impact: r.ruleImpact },
-        reason: "",
-      },
-    ]);
-  }
-
-  function clearOverrides() {
-    if (!Object.keys(overrides).length) return;
-    setOverrides({});
-    setAuditLog([
-      ...auditLog,
-      {
-        at: new Date().toISOString(),
-        by: reviewer.trim() || "Unnamed reviewer",
-        riskId: "ALL",
-        action: "Clear all overrides",
-        from: null,
-        to: null,
-        reason: "",
-      },
-    ]);
-  }
-
-  function exportRows(rows) {
-    const slug = (result.ctx.name || "project").toLowerCase().replace(/[^a-z0-9]+/g, "-");
-    downloadText(`${slug}-risk-register.csv`, risksToCsv(rows, result.ctx, auditLog));
-  }
-
-  async function copyMemo() {
-    try {
-      await navigator.clipboard.writeText(memo);
-    } catch {}
-  }
-
+export default function About() {
   return (
     <main className="min-h-screen">
-      <Header
-        right={
-          result && (
-            <span className="mono text-[11px] text-ink-2">
-              {result.ctx.name || "Untitled"} · {result.ctx.state.name} ·{" "}
-              {result.ctx.capacityMW} MW · {result.ctx.phase.replace("_", " ")}
-            </span>
-          )
-        }
-      />
+      <Header />
 
-      <div
-        className="mx-auto max-w-[1440px] px-6 py-6"
-        style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 20, alignItems: "start" }}
-      >
-        <aside
-          className="panel p-5"
-          style={{ position: "sticky", top: 24, maxHeight: "calc(100vh - 48px)", overflowY: "auto" }}
-        >
-          <p className="eyebrow mb-4">Project profile</p>
-          <ProfileForm
-            profile={profile}
-            onChange={setProfile}
-            onLoadPreset={(p) => setProfile({ ...EMPTY_PROFILE, ...p })}
-            onRun={run}
-            running={running}
-          />
-        </aside>
+      <div className="mx-auto max-w-[880px] px-6 py-8 flex flex-col gap-5">
+        <div>
+          <p className="display text-[26px]">A lifecycle risk register for data center projects.</p>
+          <p className="mt-3 text-[14px] leading-relaxed text-ink-2">
+            DC Risk Register takes a ~22-field project profile and evaluates it against a curated
+            library of 72 development and operating risks. Each risk is scored deterministically by
+            trigger rules, plotted on a 5×5 heat matrix, and summarized in an AI-generated leadership
+            memo. It is the second tool in a suite that follows a project from site selection
+            (Site Screener) through lease economics (Lease Comparator) into lifecycle risk.
+          </p>
+        </div>
 
-        <section className="flex flex-col gap-5">
-          {error && (
-            <div
-              className="panel px-5 py-3 text-[13px]"
-              style={{ borderColor: "var(--risk-high)", color: "var(--risk-high)" }}
+        <Section eyebrow="Methodology">
+          <p className="text-[13px] leading-relaxed text-ink-2">
+            The register follows the ISO 31000 sequence: identify, analyze, evaluate, treat. Every
+            risk carries a likelihood (1–5) and impact (1–5); score = L × I. Bands are Low (1–4),
+            Medium (5–9), High (10–15), and Critical (16–25). The project-level verdict is
+            Contained, Moderate, or Elevated, driven by the count and concentration of High and
+            Critical risks in the current phase.
+          </p>
+          <p className="mt-3 text-[13px] leading-relaxed text-ink-2">
+            Trigger rules read the profile fields directly. A 500 MW campus in permitting with no
+            executed interconnection agreement, for example, raises PWR likelihood; a signed
+            pre-lease lowers FIN impact. Any field left as unknown marks dependent risks as
+            unverified and lists them in the Data gaps panel rather than silently assuming a value.
+          </p>
+        </Section>
+
+        <Section eyebrow="Risk library · 11 categories, 72 risks">
+          <div className="flex flex-col divide-y" style={{ borderColor: "var(--line)" }}>
+            {CATEGORIES.map(([code, name, desc]) => (
+              <div key={code} className="grid py-2.5" style={{ gridTemplateColumns: "56px 200px 1fr", gap: 12 }}>
+                <span className="mono text-[11px] text-ink-3">{code}</span>
+                <span className="text-[13px]">{name}</span>
+                <span className="text-[12px] text-ink-2">{desc}</span>
+              </div>
+            ))}
+          </div>
+        </Section>
+
+        <Section eyebrow="Reviewer controls">
+          <p className="text-[13px] leading-relaxed text-ink-2">
+            Rule-based scores can be overridden per risk with a reason. Every override, revert, and
+            clear is written to an audit log with reviewer name and timestamp, and the log is
+            appended to the CSV export so the register remains traceable back to the rule baseline.
+          </p>
+        </Section>
+
+        <Section eyebrow="Data sources and limits">
+          <p className="text-[13px] leading-relaxed text-ink-2">
+            The risk library and state-level ratings were curated by the author for this prototype.
+            They are not sourced from proprietary company data and have not been validated against
+            historical project outcomes. Three presets (West Texas early-stage, Northern Virginia
+            under construction, Ohio operating) serve as calibration checks for the rule engine.
+            Treat scores as a structured starting point for review, not a substitute for
+            project-specific assessment.
+          </p>
+        </Section>
+
+        <Section eyebrow="How it was built">
+          <p className="text-[13px] leading-relaxed text-ink-2">
+            Next.js 16 App Router, JavaScript, Tailwind v4, static JSON data layer, and a server
+            route that calls the Anthropic API for the memo. Architecture and rule logic were
+            scoped in conversation with Claude, files were generated and then assembled in Cursor,
+            and the app is deployed on Vercel. Source is public at{" "}
+            
+              className="underline"
+              href="https://github.com/jaehong-c/dc-risk"
+              target="_blank"
+              rel="noreferrer"
             >
-              {error}
-            </div>
-          )}
+              github.com/jaehong-c/dc-risk
+            </a>
+            .
+          </p>
+        </Section>
 
-          {!result ? (
-            <div
-              className="panel text-center"
-              style={{ minHeight: 420, display: "grid", placeItems: "center" }}
-            >
-              <div>
-                <p className="display text-[20px]">Run the register to score this project.</p>
-                <p className="mt-2 text-[13px] text-ink-2">
-                  72 lifecycle risks are evaluated against the profile. Load a sample or start blank.
-                </p>
-              </div>
-            </div>
-          ) : (
-            <>
-              <SummaryStrip summary={result.summary} ctx={result.ctx} />
-
-              <div className="panel p-5">
-                <div className="mb-4 flex items-baseline justify-between">
-                  <p className="eyebrow">Heat matrix · active risks</p>
-                  <p className="mono text-[11px] text-ink-3">
-                    Click a cell to filter the register · ? marks scores with unknown inputs
-                  </p>
-                </div>
-                <HeatMatrix
-                  matrix={result.matrix}
-                  selected={selectedCell}
-                  onSelect={setSelectedCell}
-                  top={result.summary.top}
-                />
-              </div>
-
-              <DataGaps dataGaps={result.summary.dataGaps} risks={result.risks} />
-
-              <MemoPanel
-                memo={memo}
-                loading={memoLoading}
-                error={memoError}
-                onGenerate={generateMemo}
-                onCopy={copyMemo}
-              />
-
-              <div className="panel p-5">
-                <div className="mb-4 flex items-center justify-between">
-                  <p className="eyebrow">Register</p>
-                  <div className="flex items-center gap-2">
-                    <label className="text-[11px] text-ink-3">Reviewer</label>
-                    <input
-                      className="field-input"
-                      style={{ width: 180, height: 32 }}
-                      placeholder="Your name for the audit log"
-                      value={reviewer}
-                      onChange={(e) => setReviewer(e.target.value)}
-                    />
-                    {result.summary.overridden > 0 && (
-                      <span className="mono text-[11px] text-ink-2">
-                        {result.summary.overridden} overridden
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <RegisterTable
-                  risks={result.risks}
-                  selectedCell={selectedCell}
-                  onExport={exportRows}
-                  onOverride={handleOverride}
-                  onRevert={handleRevert}
-                />
-              </div>
-
-              <AuditLog log={auditLog} onClear={clearOverrides} />
-            </>
-          )}
-        </section>
+        <Section eyebrow="Roadmap">
+          <ul className="flex flex-col gap-1.5 text-[13px] text-ink-2">
+            {ROADMAP.map((item) => (
+              <li key={item} className="flex gap-2">
+                <span className="text-ink-3">–</span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </Section>
       </div>
 
-      <footer className="mx-auto max-w-[1440px] px-6 pb-8 pt-2 text-[11px] text-ink-3">
-        <p>
-          Risk library and state ratings are curated by the author for this prototype and are not
-          sourced from proprietary company data. Scores are rule-based; replace with project-specific
-          assessments for production use.
-        </p>
-        <p className="mt-2">© 2026 Jae Chung. All rights reserved.</p>
+      <footer className="mx-auto max-w-[880px] px-6 pb-8 pt-2 text-[11px] text-ink-3">
+        <p>© 2026 Jae Chung. All rights reserved.</p>
       </footer>
     </main>
   );

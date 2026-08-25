@@ -54,15 +54,22 @@ export default function About() {
 
       <div className="mx-auto max-w-[880px] px-6 py-8 flex flex-col gap-5">
         <div>
-          <p className="display text-[26px]">A lifecycle risk register for data center projects.</p>
-          <p className="mt-3 text-[14px] leading-relaxed text-ink-2">
+          <p className="eyebrow mb-2">About</p>
+          <h1 className="display text-[26px]">Lifecycle risk intelligence for data center development</h1>
+          <p className="mt-3 text-[14px] text-ink-2">
+            Built by Jae Chung. Code and data are public on <a className="underline" href={REPO_URL} target="_blank" rel="noreferrer">GitHub</a>.
+          </p>
+        </div>
+
+        <Section eyebrow="What it does">
+          <Para first>
             DC Risk Register takes a 22-field project profile and evaluates it against a curated
             library of 72 development and operating risks. Each risk is scored deterministically by
             trigger rules, plotted on a 5x5 heat matrix, and summarized in an AI-generated leadership
             memo. It is the second tool in a suite that follows a project from site selection
             (Site Screener) through lease economics (Lease Comparator) into lifecycle risk.
-          </p>
-        </div>
+          </Para>
+        </Section>
 
         <Section eyebrow="Methodology">
           <Para first>
@@ -121,9 +128,6 @@ export default function About() {
             route that calls the Anthropic API for the memo. Architecture and rule logic were
             scoped in conversation with Claude, files were generated and then assembled in Cursor,
             and the app is deployed on Vercel.
-          </Para>
-          <Para>
-            Source is public at <a className="underline" href={REPO_URL} target="_blank" rel="noreferrer">github.com/jaehong-c/dc-risk</a>.
           </Para>
         </Section>
 

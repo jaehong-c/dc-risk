@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Header from "@/components/Header";
 import ProfileForm from "@/components/ProfileForm";
 import SummaryStrip from "@/components/SummaryStrip";
 import HeatMatrix from "@/components/HeatMatrix";
@@ -81,16 +80,26 @@ export default function Home() {
 
   return (
     <main className="min-h-screen">
-      <Header
-        right={
-          result && (
-            <span className="mono text-[11px] text-ink-2">
-              {result.ctx.name || "Untitled"} · {result.ctx.state.name} ·{" "}
-              {result.ctx.capacityMW} MW · {result.ctx.phase.replace("_", " ")}
-            </span>
-          )
-        }
-      />
+      <header className="h-14 border-b border-line bg-surface">
+        <div
+          className="mx-auto h-full max-w-[1440px] px-6"
+          style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
+        >
+          <div className="flex items-baseline gap-3">
+            <span className="display text-[15px]">DC Risk Register</span>
+            <span className="eyebrow">Lifecycle risk · v0.1</span>
+          </div>
+          <div className="flex items-center" style={{ gap: 24 }}>
+            {result && (
+              <span className="mono text-[11px] text-ink-2">
+                {result.ctx.name || "Untitled"} · {result.ctx.state.name} ·{" "}
+                {result.ctx.capacityMW} MW · {result.ctx.phase.replace("_", " ")}
+              </span>
+            )}
+            <span className="mono text-[11px] text-ink-3">Prototype · curated risk library</span>
+          </div>
+        </div>
+      </header>
 
       <div
         className="mx-auto max-w-[1440px] px-6 py-6"

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+export const maxDuration = 60;
+
 const FIELD_LABELS = {
   monthsToCOD: "Target COD",
   workloadType: "Workload",
@@ -121,7 +123,7 @@ Information to confirm`;
       },
       body: JSON.stringify({
         model: "claude-sonnet-5",
-        max_tokens: 1400,
+        max_tokens: 2000,
         system,
         messages: [{ role: "user", content: user }],
       }),
@@ -141,6 +143,13 @@ Information to confirm`;
       .map((b) => b.text)
       .join("\n")
       .trim();
+
+    if (data.stop_reason && data.stop_reason !== "end_turn") {
+      return NextResponse.json(
+        { error: `Memo ended early (${data.stop_reason}). Try Regenerate.`, memo },
+        { status: 502 }
+      );
+    }
 
     return NextResponse.json({ memo, usage: data.usage });
   } catch (e) {

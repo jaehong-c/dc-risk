@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 
 const TOOLS = [
   { key: "screener", label: "Site Screener", href: "https://dc-screener.vercel.app" },
-  { key: "lease", label: "Lease", href: "https://dc-lease.vercel.app" },
+  { key: "lease", label: "Lease Comparator", href: "https://dc-lease.vercel.app" },
   { key: "risk", label: "Risk Register", href: null },
 ];
 
@@ -66,6 +66,7 @@ export default function Header({ right }) {
                   background: current ? "var(--ink)" : "var(--surface)",
                   borderLeft: i === 0 ? "none" : "1px solid var(--line-2)",
                   textDecoration: "none",
+                  whiteSpace: "nowrap",
                 };
                 return current ? (
                   <span key={t.key} style={style}>{t.label}</span>

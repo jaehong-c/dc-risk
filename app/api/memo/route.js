@@ -1,5 +1,36 @@
 import { NextResponse } from "next/server";
 
+const FIELD_LABELS = {
+  monthsToCOD: "Target COD",
+  workloadType: "Workload",
+  tenantStatus: "Tenant",
+  landStatus: "Land control",
+  permittingStatus: "Entitlements",
+  taxIncentive: "Tax incentive",
+  powerStatus: "Power",
+  powerSource: "Power source",
+  redundancy: "Redundancy",
+  coolingType: "Cooling",
+  waterSource: "Water source",
+  contractType: "Contract type",
+  gcStatus: "General contractor",
+  longLeadStatus: "Long-lead equipment",
+  financing: "Financing",
+  insuranceStatus: "Insurance program",
+  complianceStatus: "SOC 2 / ISO 27001",
+  bcdrStatus: "BC/DR plan",
+};
+
+const show = (v) => (v === "unknown" || v === "" || v == null ? "UNKNOWN" : v);
+
+function verdict(summary) {
+  const avg = summary.avgScore;
+  const crit = summary.byLevel.critical;
+  if (crit >= 3 || avg >= 12) return "Elevated";
+  if (avg >= 8 || crit >= 1) return "Moderate";
+  return "Contained";
+}
+
 export async function POST(req) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -12,39 +43,53 @@ export async function POST(req) {
 
   const m = ctx.monthsToCOD;
   const codLine =
-    m == null ? "not set" : m >= 0 ? `${m} months to COD` : `${Math.abs(m)} months since COD`;
+    m == null ? "UNKNOWN" : m >= 0 ? `${m} months to COD` : `${Math.abs(m)} months since COD`;
 
   const profileLines = [
     `Project: ${ctx.name || "Untitled"}`,
-    `Location: ${ctx.state.name} (grid operator ${ctx.state.gridOperator})`,
-    `Capacity: ${ctx.capacityMW} MW · Workload: ${ctx.workloadType} · Tenant: ${ctx.tenantStatus}`,
+    `Location: ${ctx.state.name} (grid operator ${ctx.state.gridOperator})${ctx.locality ? ` · ${ctx.locality}` : ""}`,
+    `Capacity: ${ctx.capacityMW} MW · Workload: ${show(ctx.workloadType)} · Tenant: ${show(ctx.tenantStatus)}`,
     `Phase: ${ctx.phase} · Timing: ${codLine}`,
-    `Power: ${ctx.powerStatus} (${ctx.powerSource}) · Redundancy: ${ctx.redundancy}`,
-    `Cooling: ${ctx.coolingType} · Water: ${ctx.waterSource}`,
-    `Land: ${ctx.landStatus} · Entitlements: ${ctx.permittingStatus} · Incentive: ${ctx.taxIncentive}`,
-    `Contract: ${ctx.contractType} · GC: ${ctx.gcStatus} · Long-lead: ${ctx.longLeadStatus}`,
-    `Financing: ${ctx.financing} · Insurance: ${ctx.insuranceStatus} · Compliance: ${ctx.complianceStatus} · BC/DR: ${ctx.bcdrStatus}`,
+    `Power: ${show(ctx.powerStatus)} (${show(ctx.powerSource)}) · Redundancy: ${show(ctx.redundancy)}`,
+    `Cooling: ${show(ctx.coolingType)} · Water: ${show(ctx.waterSource)}`,
+    `Land: ${show(ctx.landStatus)} · Entitlements: ${show(ctx.permittingStatus)} · Incentive: ${show(ctx.taxIncentive)}`,
+    `Contract: ${show(ctx.contractType)} · GC: ${show(ctx.gcStatus)} · Long-lead: ${show(ctx.longLeadStatus)}`,
+    `Financing: ${show(ctx.financing)} · Insurance: ${show(ctx.insuranceStatus)} · Compliance: ${show(ctx.complianceStatus)} · BC/DR: ${show(ctx.bcdrStatus)}`,
   ].join("\n");
 
   const summaryLines = [
+    `Overall verdict from the register: ${verdict(summary)} (scale: score = likelihood x impact, 1 to 25; Low 1-4, Medium 5-9, High 10-15, Critical 16-25)`,
     `Active risks: ${summary.active} (critical ${summary.byLevel.critical}, high ${summary.byLevel.high}, medium ${summary.byLevel.medium}, low ${summary.byLevel.low})`,
-    `Average score: ${summary.avgScore}`,
+    `Unverified scores (depend on unknown inputs): ${summary.unverified}`,
+    `Average score: ${summary.avgScore} of 25`,
     `By category: ${Object.entries(summary.byCategory).map(([k, v]) => `${k} ${v}`).join(", ")}`,
   ].join("\n");
+
+  const gapEntries = Object.entries(summary.dataGaps || {});
+  const gapLines = gapEntries.length
+    ? gapEntries
+        .map(
+          ([f, ids]) =>
+            `${FIELD_LABELS[f] || f}: affects ${ids.length} active risks (${ids.slice(0, 5).join(", ")}${ids.length > 5 ? ", ..." : ""})`
+        )
+        .join("\n")
+    : "None. All inputs confirmed.";
 
   const riskLines = top
     .map(
       (r) =>
-        `${r.id} | ${r.title} | ${r.categoryName} | L${r.likelihood} x I${r.impact} = ${r.score} (${r.level}) | owner ${r.owner}\n` +
+        `${r.id} | ${r.title} | ${r.categoryName} | L${r.likelihood} x I${r.impact} = ${r.score} (${r.level})${r.unverified ? " | UNVERIFIED" : ""} | owner ${r.owner}\n` +
         `  drivers: ${r.firedTriggers.map((t) => t.note).join("; ") || "base case"}\n` +
         `  mitigations: ${r.mitigations.join("; ")}\n` +
         `  KRI: ${r.kri}`
     )
     .join("\n");
 
-  const system = `You are a data center risk associate writing a one-page risk memo for the leadership of a data center developer. The scores, rankings, and drivers were produced by a rule-based register; do not re-score or invent new risks. Your job is to interpret: explain what the numbers mean for this specific project, connect risks that compound each other, and recommend where leadership attention goes in the next 90 days.
+  const system = `You are a data center risk associate writing a one-page risk memo for the leadership of a data center developer. The scores, rankings, verdict, and drivers were produced by a rule-based register; do not re-score or invent new risks. Your job is to interpret: explain what the numbers mean for this specific project, connect risks that compound each other, and recommend where leadership attention goes in the next 90 days. If a county or utility territory is given, refer to it by name where relevant.
 
-Format rules: plain text only. No markdown, no # symbols, no asterisks, no bullet symbols, no title line. Start directly with the first section header. Each section is the header on its own line followed by one or two short paragraphs. No em dashes. Around 450 words.`;
+Where inputs are UNKNOWN, the register used base scores and skipped related triggers, so exposure may be understated. Say this plainly where it matters and list what must be confirmed.
+
+Format rules: plain text with one exception: wrap the single most important phrase in each paragraph in double asterisks for emphasis, at most two per paragraph. No headers with # symbols, no bullet symbols, no title line. Start directly with the first section header on its own line. Each section is the header line followed by one or two short paragraphs. No em dashes. Around 500 words.`;
 
   const user = `PROJECT PROFILE
 ${profileLines}
@@ -52,15 +97,19 @@ ${profileLines}
 REGISTER SUMMARY
 ${summaryLines}
 
+DATA GAPS (unknown inputs)
+${gapLines}
+
 TOP ACTIVE RISKS (ranked by score)
 ${riskLines}
 
-Write the memo with exactly these five section headers, in this order:
+Write the memo with exactly these six section headers, in this order:
 Overall exposure
 What is driving the score
 Compounding risks
 Priority actions, next 90 days
-Indicators to watch`;
+Indicators to watch
+Information to confirm`;
 
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -72,7 +121,7 @@ Indicators to watch`;
       },
       body: JSON.stringify({
         model: "claude-sonnet-5",
-        max_tokens: 1200,
+        max_tokens: 1400,
         system,
         messages: [{ role: "user", content: user }],
       }),

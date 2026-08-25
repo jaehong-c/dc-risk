@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CATEGORIES } from "@/lib/scoring";
+import { FIELD_LABELS } from "@/lib/presets";
 
 const CHIP = { low: "chip-low", medium: "chip-med", high: "chip-high", critical: "chip-crit" };
 const STATUS_LABEL = { active: "Active", upcoming: "Upcoming", retired: "Retired" };
@@ -13,6 +14,7 @@ export default function RegisterTable({ risks, selectedCell, onExport }) {
 
   const rows = risks.filter((r) => {
     if (status !== "all" && r.status !== status) return false;
+    if (status === "unverified" && !r.unverified) return false;
     if (category !== "all" && r.category !== category) return false;
     if (selectedCell && (r.likelihood !== selectedCell.l || r.impact !== selectedCell.i)) return false;
     return true;
@@ -21,8 +23,9 @@ export default function RegisterTable({ risks, selectedCell, onExport }) {
   return (
     <div>
       <div className="mb-4 flex items-center gap-3">
-        <select className="field-select" style={{ width: 150 }} value={status} onChange={(e) => setStatus(e.target.value)}>
+        <select className="field-select" style={{ width: 170 }} value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="active">Active</option>
+          <option value="unverified">Active, unverified</option>
           <option value="upcoming">Upcoming</option>
           <option value="retired">Retired</option>
           <option value="all">All statuses</option>
@@ -74,7 +77,14 @@ function RowGroup({ r, open, onToggle }) {
     <>
       <tr className="cursor-pointer border-b border-line hover:bg-surface-2" onClick={onToggle}>
         <td className="mono py-2.5 pr-3 text-ink-2">{r.id}</td>
-        <td className="py-2.5 pr-3">{r.title}</td>
+        <td className="py-2.5 pr-3">
+          {r.title}
+          {r.unverified && (
+            <span className="mono ml-1.5 text-[10px]" style={{ color: "var(--risk-med)" }}>
+              ?
+            </span>
+          )}
+        </td>
         <td className="py-2.5 pr-3 text-ink-2">{r.categoryName}</td>
         <td className="py-2.5 pr-3 text-ink-2">{r.owner}</td>
         <td className="mono py-2.5 pr-3">{r.likelihood}</td>
@@ -109,6 +119,12 @@ function RowGroup({ r, open, onToggle }) {
                       </li>
                     ))}
                   </ul>
+                )}
+                {r.unverified && (
+                  <p className="mt-2 text-[11.5px]" style={{ color: "var(--risk-med)" }}>
+                    Unknown inputs: {r.unknownFields.map((f) => FIELD_LABELS[f] || f).join(", ")}.
+                    Related triggers did not fire.
+                  </p>
                 )}
               </div>
               <div>

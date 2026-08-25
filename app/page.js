@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Header from "@/components/Header";
 import ProfileForm from "@/components/ProfileForm";
 import SummaryStrip from "@/components/SummaryStrip";
 import HeatMatrix from "@/components/HeatMatrix";
+import DataGaps from "@/components/DataGaps";
 import RegisterTable from "@/components/RegisterTable";
 import MemoPanel from "@/components/MemoPanel";
 import { EMPTY_PROFILE, PRESETS } from "@/lib/presets";
@@ -79,26 +81,16 @@ export default function Home() {
 
   return (
     <main className="min-h-screen">
-      <header className="h-14 border-b border-line bg-surface">
-        <div
-          className="mx-auto h-full max-w-[1440px] px-6"
-          style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
-        >
-          <div className="flex items-baseline gap-3">
-            <span className="display text-[15px]">DC Risk Register</span>
-            <span className="eyebrow">Lifecycle risk · v0.1</span>
-          </div>
-          <div className="flex items-center" style={{ gap: 24 }}>
-            {result && (
-              <span className="mono text-[11px] text-ink-2">
-                {result.ctx.name || "Untitled"} · {result.ctx.state.name} ·{" "}
-                {result.ctx.capacityMW} MW · {result.ctx.phase.replace("_", " ")}
-              </span>
-            )}
-            <span className="mono text-[11px] text-ink-3">Prototype · curated risk library</span>
-          </div>
-        </div>
-      </header>
+      <Header
+        right={
+          result && (
+            <span className="mono text-[11px] text-ink-2">
+              {result.ctx.name || "Untitled"} · {result.ctx.state.name} ·{" "}
+              {result.ctx.capacityMW} MW · {result.ctx.phase.replace("_", " ")}
+            </span>
+          )
+        }
+      />
 
       <div
         className="mx-auto max-w-[1440px] px-6 py-6"
@@ -136,7 +128,7 @@ export default function Home() {
               <div>
                 <p className="display text-[20px]">Run the register to score this project.</p>
                 <p className="mt-2 text-[13px] text-ink-2">
-                  72 lifecycle risks are evaluated against the profile. Load a sample to start.
+                  72 lifecycle risks are evaluated against the profile. Load a sample or start blank.
                 </p>
               </div>
             </div>
@@ -147,7 +139,9 @@ export default function Home() {
               <div className="panel p-5">
                 <div className="mb-4 flex items-baseline justify-between">
                   <p className="eyebrow">Heat matrix · active risks</p>
-                  <p className="mono text-[11px] text-ink-3">Click a cell to filter the register</p>
+                  <p className="mono text-[11px] text-ink-3">
+                    Click a cell to filter the register · ? marks scores with unknown inputs
+                  </p>
                 </div>
                 <HeatMatrix
                   matrix={result.matrix}
@@ -156,6 +150,8 @@ export default function Home() {
                   top={result.summary.top}
                 />
               </div>
+
+              <DataGaps dataGaps={result.summary.dataGaps} risks={result.risks} />
 
               <MemoPanel
                 memo={memo}

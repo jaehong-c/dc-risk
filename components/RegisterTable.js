@@ -7,14 +7,15 @@ import { FIELD_LABELS } from "@/lib/presets";
 const CHIP = { low: "chip-low", medium: "chip-med", high: "chip-high", critical: "chip-crit" };
 const STATUS_LABEL = { active: "Active", upcoming: "Upcoming", retired: "Retired" };
 
-export default function RegisterTable({ risks, selectedCell, onExport }) {
+export default function RegisterTable({ risks, selectedCell, onExport, onOverride, onRevert }) {
   const [status, setStatus] = useState("active");
   const [category, setCategory] = useState("all");
   const [open, setOpen] = useState(null);
 
   const rows = risks.filter((r) => {
+    if (status === "unverified") return r.status === "active" && r.unverified;
+    if (status === "overridden") return r.overridden;
     if (status !== "all" && r.status !== status) return false;
-    if (status === "unverified" && !r.unverified) return false;
     if (category !== "all" && r.category !== category) return false;
     if (selectedCell && (r.likelihood !== selectedCell.l || r.impact !== selectedCell.i)) return false;
     return true;
@@ -26,6 +27,7 @@ export default function RegisterTable({ risks, selectedCell, onExport }) {
         <select className="field-select" style={{ width: 170 }} value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="active">Active</option>
           <option value="unverified">Active, unverified</option>
+          <option value="overridden">Overridden</option>
           <option value="upcoming">Upcoming</option>
           <option value="retired">Retired</option>
           <option value="all">All statuses</option>
@@ -57,7 +59,14 @@ export default function RegisterTable({ risks, selectedCell, onExport }) {
         </thead>
         <tbody>
           {rows.map((r) => (
-            <RowGroup key={r.id} r={r} open={open === r.id} onToggle={() => setOpen(open === r.id ? null : r.id)} />
+            <RowGroup
+              key={r.id}
+              r={r}
+              open={open === r.id}
+              onToggle={() => setOpen(open === r.id ? null : r.id)}
+              onOverride={onOverride}
+              onRevert={onRevert}
+            />
           ))}
           {rows.length === 0 && (
             <tr>
@@ -72,7 +81,17 @@ export default function RegisterTable({ risks, selectedCell, onExport }) {
   );
 }
 
-function RowGroup({ r, open, onToggle }) {
+function RowGroup({ r, open, onToggle, onOverride, onRevert }) {
+  const [L, setL] = useState(r.likelihood);
+  const [I, setI] = useState(r.impact);
+  const [reason, setReason] = useState(r.override?.reason || "");
+  const dirty = Number(L) !== r.likelihood || Number(I) !== r.impact;
+
+  function save() {
+    if (!reason.trim()) return;
+    onOverride(r.id, { likelihood: Number(L), impact: Number(I), reason: reason.trim() });
+  }
+
   return (
     <>
       <tr className="cursor-pointer border-b border-line hover:bg-surface-2" onClick={onToggle}>
@@ -80,8 +99,11 @@ function RowGroup({ r, open, onToggle }) {
         <td className="py-2.5 pr-3">
           {r.title}
           {r.unverified && (
-            <span className="mono ml-1.5 text-[10px]" style={{ color: "var(--risk-med)" }}>
-              ?
+            <span className="mono ml-1.5 text-[10px]" style={{ color: "var(--risk-med)" }}>?</span>
+          )}
+          {r.overridden && (
+            <span className="chip ml-2" style={{ background: "var(--surface-2)", color: "var(--ink-2)" }}>
+              override
             </span>
           )}
         </td>
@@ -89,7 +111,12 @@ function RowGroup({ r, open, onToggle }) {
         <td className="py-2.5 pr-3 text-ink-2">{r.owner}</td>
         <td className="mono py-2.5 pr-3">{r.likelihood}</td>
         <td className="mono py-2.5 pr-3">{r.impact}</td>
-        <td className="mono py-2.5 pr-3 font-medium">{r.score}</td>
+        <td className="mono py-2.5 pr-3 font-medium">
+          {r.score}
+          {r.overridden && (
+            <span className="ml-1 text-[10.5px] font-normal text-ink-3">(rule {r.ruleScore})</span>
+          )}
+        </td>
         <td className="py-2.5 pr-3"><span className={`chip ${CHIP[r.level]}`}>{r.level}</span></td>
         <td className="py-2.5 text-ink-3">{STATUS_LABEL[r.status]}</td>
       </tr>
@@ -102,7 +129,7 @@ function RowGroup({ r, open, onToggle }) {
                 <p className="text-ink-2">{r.description}</p>
                 <p className="eyebrow mb-1.5 mt-4">Why this score</p>
                 <p className="mono text-[11px] text-ink-2">
-                  Base L{r.baseLikelihood} × I{r.baseImpact} = {r.baseScore}
+                  Base L{r.baseLikelihood} × I{r.baseImpact} = {r.baseScore} → Rule L{r.ruleLikelihood} × I{r.ruleImpact} = {r.ruleScore}
                 </p>
                 {r.firedTriggers.length === 0 ? (
                   <p className="text-ink-3">No triggers fired.</p>
@@ -127,6 +154,7 @@ function RowGroup({ r, open, onToggle }) {
                   </p>
                 )}
               </div>
+
               <div>
                 <p className="eyebrow mb-1.5">Mitigations</p>
                 <ul className="flex flex-col gap-1 text-ink-2">
@@ -137,14 +165,53 @@ function RowGroup({ r, open, onToggle }) {
                     </li>
                   ))}
                 </ul>
-              </div>
-              <div>
-                <p className="eyebrow mb-1.5">Key risk indicator</p>
+                <p className="eyebrow mb-1.5 mt-4">Key risk indicator</p>
                 <p className="text-ink-2">{r.kri}</p>
-                <p className="eyebrow mb-1.5 mt-4">Control · phases</p>
-                <p className="text-ink-2">
-                  {r.controlType} · {r.phases.map((p) => p.replace("_", " ")).join(", ")}
+              </div>
+
+              <div>
+                <p className="eyebrow mb-1.5">Manual override</p>
+                <p className="mb-2 text-[11.5px] text-ink-3">
+                  Replace the rule score with a risk owner assessment. A reason is required and the
+                  change is logged.
                 </p>
+                <div className="flex items-center gap-2">
+                  <label className="mono text-[11px] text-ink-3">L</label>
+                  <select className="field-select" style={{ width: 64 }} value={L} onChange={(e) => setL(e.target.value)}>
+                    {[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n}</option>)}
+                  </select>
+                  <label className="mono text-[11px] text-ink-3">I</label>
+                  <select className="field-select" style={{ width: 64 }} value={I} onChange={(e) => setI(e.target.value)}>
+                    {[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n}</option>)}
+                  </select>
+                  <span className="mono text-[12px]">= {Number(L) * Number(I)}</span>
+                </div>
+                <input
+                  className="field-input mt-2"
+                  placeholder="Reason (required)"
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                />
+                <div className="mt-2 flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="btn-ghost"
+                    onClick={save}
+                    disabled={!reason.trim() || (!dirty && !r.overridden)}
+                  >
+                    {r.overridden ? "Update override" : "Apply override"}
+                  </button>
+                  {r.overridden && (
+                    <button type="button" className="btn-ghost" onClick={() => onRevert(r.id)}>
+                      Revert to rule
+                    </button>
+                  )}
+                </div>
+                {r.overridden && r.override && (
+                  <p className="mt-2 text-[11px] text-ink-3">
+                    Overridden by {r.override.by} on {r.override.at.slice(0, 10)}: {r.override.reason}
+                  </p>
+                )}
               </div>
             </div>
           </td>

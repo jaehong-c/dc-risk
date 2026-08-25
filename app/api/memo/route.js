@@ -42,6 +42,7 @@ export async function POST(req) {
   const { ctx, summary, risks } = await req.json();
   const active = risks.filter((r) => r.status === "active");
   const top = active.slice(0, 12);
+  const overridden = active.filter((r) => r.overridden);
 
   const m = ctx.monthsToCOD;
   const codLine =
@@ -63,6 +64,7 @@ export async function POST(req) {
     `Overall verdict from the register: ${verdict(summary)} (scale: score = likelihood x impact, 1 to 25; Low 1-4, Medium 5-9, High 10-15, Critical 16-25)`,
     `Active risks: ${summary.active} (critical ${summary.byLevel.critical}, high ${summary.byLevel.high}, medium ${summary.byLevel.medium}, low ${summary.byLevel.low})`,
     `Unverified scores (depend on unknown inputs): ${summary.unverified}`,
+    `Manually overridden scores: ${overridden.length}`,
     `Average score: ${summary.avgScore} of 25`,
     `By category: ${Object.entries(summary.byCategory).map(([k, v]) => `${k} ${v}`).join(", ")}`,
   ].join("\n");
@@ -77,19 +79,28 @@ export async function POST(req) {
         .join("\n")
     : "None. All inputs confirmed.";
 
+  const overrideLines = overridden.length
+    ? overridden
+        .map(
+          (r) =>
+            `${r.id} ${r.title}: rule L${r.ruleLikelihood} x I${r.ruleImpact} = ${r.ruleScore} → owner assessment L${r.likelihood} x I${r.impact} = ${r.score}. Reason: ${r.override?.reason || "not given"} (${r.override?.by || "unnamed"})`
+        )
+        .join("\n")
+    : "None.";
+
   const riskLines = top
     .map(
       (r) =>
-        `${r.id} | ${r.title} | ${r.categoryName} | L${r.likelihood} x I${r.impact} = ${r.score} (${r.level})${r.unverified ? " | UNVERIFIED" : ""} | owner ${r.owner}\n` +
+        `${r.id} | ${r.title} | ${r.categoryName} | L${r.likelihood} x I${r.impact} = ${r.score} (${r.level})${r.unverified ? " | UNVERIFIED" : ""}${r.overridden ? " | MANUAL OVERRIDE" : ""} | owner ${r.owner}\n` +
         `  drivers: ${r.firedTriggers.map((t) => t.note).join("; ") || "base case"}\n` +
         `  mitigations: ${r.mitigations.join("; ")}\n` +
         `  KRI: ${r.kri}`
     )
     .join("\n");
 
-  const system = `You are a data center risk associate writing a one-page risk memo for the leadership of a data center developer. The scores, rankings, verdict, and drivers were produced by a rule-based register; do not re-score or invent new risks. Your job is to interpret: explain what the numbers mean for this specific project, connect risks that compound each other, and recommend where leadership attention goes in the next 90 days. If a county or utility territory is given, refer to it by name where relevant.
+  const system = `You are a data center risk associate writing a one-page risk memo for the leadership of a data center developer. The scores, rankings, verdict, and drivers were produced by a rule-based register, with some scores replaced by risk owner assessments (manual overrides). Do not re-score or invent new risks. Your job is to interpret: explain what the numbers mean for this specific project, connect risks that compound each other, and recommend where leadership attention goes in the next 90 days. If a county or utility territory is given, refer to it by name where relevant.
 
-Where inputs are UNKNOWN, the register used base scores and skipped related triggers, so exposure may be understated. Say this plainly where it matters and list what must be confirmed.
+Where a score was manually overridden, mention it once with the owner's reason so leadership knows a judgment call was made. Where inputs are UNKNOWN, the register used base scores and skipped related triggers, so exposure may be understated. Say this plainly where it matters and list what must be confirmed.
 
 Format rules: plain text with one exception: wrap the single most important phrase in each paragraph in double asterisks for emphasis, at most two per paragraph. No headers with # symbols, no bullet symbols, no title line. Start directly with the first section header on its own line. Each section is the header line followed by one or two short paragraphs. No em dashes. Around 500 words.`;
 
@@ -99,10 +110,13 @@ ${profileLines}
 REGISTER SUMMARY
 ${summaryLines}
 
+MANUAL OVERRIDES
+${overrideLines}
+
 DATA GAPS (unknown inputs)
 ${gapLines}
 
-TOP ACTIVE RISKS (ranked by score)
+TOP ACTIVE RISKS (ranked by effective score)
 ${riskLines}
 
 Write the memo with exactly these six section headers, in this order:

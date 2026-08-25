@@ -1,25 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import Header from "@/components/Header";
 import ProfileForm from "@/components/ProfileForm";
 import SummaryStrip from "@/components/SummaryStrip";
 import HeatMatrix from "@/components/HeatMatrix";
 import DataGaps from "@/components/DataGaps";
 import RegisterTable from "@/components/RegisterTable";
+import AuditLog from "@/components/AuditLog";
 import MemoPanel from "@/components/MemoPanel";
 import { EMPTY_PROFILE, PRESETS } from "@/lib/presets";
+import { applyOverrides } from "@/lib/scoring";
 import { risksToCsv, downloadText } from "@/lib/exportCsv";
 
 export default function Home() {
   const [profile, setProfile] = useState(PRESETS[0].profile);
-  const [result, setResult] = useState(null);
+  const [raw, setRaw] = useState(null);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState(null);
   const [selectedCell, setSelectedCell] = useState(null);
 
+  const [reviewer, setReviewer] = useState("");
+  const [overrides, setOverrides] = useState({});
+  const [auditLog, setAuditLog] = useState([]);
+
   const [memo, setMemo] = useState("");
   const [memoLoading, setMemoLoading] = useState(false);
   const [memoError, setMemoError] = useState(null);
+
+  const result = useMemo(() => applyOverrides(raw, overrides), [raw, overrides]);
 
   async function run() {
     setRunning(true);
@@ -35,8 +44,8 @@ export default function Home() {
       });
       if (!res.ok) throw new Error(`Scoring failed (${res.status})`);
       const data = await res.json();
-      setResult(data);
-      generateMemoFor(data);
+      setRaw(data);
+      generateMemoFor(applyOverrides(data, overrides));
     } catch (e) {
       setError(e.message);
     } finally {
@@ -51,7 +60,7 @@ export default function Home() {
       const res = await fetch("/api/memo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, auditLog }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || `Memo failed (${res.status})`);
@@ -67,9 +76,62 @@ export default function Home() {
     if (result) generateMemoFor(result);
   }
 
+  function handleOverride(riskId, { likelihood, impact, reason }) {
+    const r = result.risks.find((x) => x.id === riskId);
+    const at = new Date().toISOString();
+    const by = reviewer.trim() || "Unnamed reviewer";
+    const entry = {
+      at,
+      by,
+      riskId,
+      action: r.overridden ? "Update override" : "Override",
+      from: { likelihood: r.likelihood, impact: r.impact },
+      to: { likelihood, impact },
+      reason,
+    };
+    setOverrides({ ...overrides, [riskId]: { likelihood, impact, reason, by, at } });
+    setAuditLog([...auditLog, entry]);
+  }
+
+  function handleRevert(riskId) {
+    const r = result.risks.find((x) => x.id === riskId);
+    const next = { ...overrides };
+    delete next[riskId];
+    setOverrides(next);
+    setAuditLog([
+      ...auditLog,
+      {
+        at: new Date().toISOString(),
+        by: reviewer.trim() || "Unnamed reviewer",
+        riskId,
+        action: "Revert to rule",
+        from: { likelihood: r.likelihood, impact: r.impact },
+        to: { likelihood: r.ruleLikelihood, impact: r.ruleImpact },
+        reason: "",
+      },
+    ]);
+  }
+
+  function clearOverrides() {
+    if (!Object.keys(overrides).length) return;
+    setOverrides({});
+    setAuditLog([
+      ...auditLog,
+      {
+        at: new Date().toISOString(),
+        by: reviewer.trim() || "Unnamed reviewer",
+        riskId: "ALL",
+        action: "Clear all overrides",
+        from: null,
+        to: null,
+        reason: "",
+      },
+    ]);
+  }
+
   function exportRows(rows) {
     const slug = (result.ctx.name || "project").toLowerCase().replace(/[^a-z0-9]+/g, "-");
-    downloadText(`${slug}-risk-register.csv`, risksToCsv(rows, result.ctx));
+    downloadText(`${slug}-risk-register.csv`, risksToCsv(rows, result.ctx, auditLog));
   }
 
   async function copyMemo() {
@@ -80,26 +142,16 @@ export default function Home() {
 
   return (
     <main className="min-h-screen">
-      <header className="h-14 border-b border-line bg-surface">
-        <div
-          className="mx-auto h-full max-w-[1440px] px-6"
-          style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
-        >
-          <div className="flex items-baseline gap-3">
-            <span className="display text-[15px]">DC Risk Register</span>
-            <span className="eyebrow">Lifecycle risk · v0.1</span>
-          </div>
-          <div className="flex items-center" style={{ gap: 24 }}>
-            {result && (
-              <span className="mono text-[11px] text-ink-2">
-                {result.ctx.name || "Untitled"} · {result.ctx.state.name} ·{" "}
-                {result.ctx.capacityMW} MW · {result.ctx.phase.replace("_", " ")}
-              </span>
-            )}
-            <span className="mono text-[11px] text-ink-3">Prototype · curated risk library</span>
-          </div>
-        </div>
-      </header>
+      <Header
+        right={
+          result && (
+            <span className="mono text-[11px] text-ink-2">
+              {result.ctx.name || "Untitled"} · {result.ctx.state.name} ·{" "}
+              {result.ctx.capacityMW} MW · {result.ctx.phase.replace("_", " ")}
+            </span>
+          )
+        }
+      />
 
       <div
         className="mx-auto max-w-[1440px] px-6 py-6"
@@ -171,13 +223,34 @@ export default function Home() {
               />
 
               <div className="panel p-5">
-                <p className="eyebrow mb-4">Register</p>
+                <div className="mb-4 flex items-center justify-between">
+                  <p className="eyebrow">Register</p>
+                  <div className="flex items-center gap-2">
+                    <label className="text-[11px] text-ink-3">Reviewer</label>
+                    <input
+                      className="field-input"
+                      style={{ width: 180, height: 32 }}
+                      placeholder="Your name for the audit log"
+                      value={reviewer}
+                      onChange={(e) => setReviewer(e.target.value)}
+                    />
+                    {result.summary.overridden > 0 && (
+                      <span className="mono text-[11px] text-ink-2">
+                        {result.summary.overridden} overridden
+                      </span>
+                    )}
+                  </div>
+                </div>
                 <RegisterTable
                   risks={result.risks}
                   selectedCell={selectedCell}
                   onExport={exportRows}
+                  onOverride={handleOverride}
+                  onRevert={handleRevert}
                 />
               </div>
+
+              <AuditLog log={auditLog} onClear={clearOverrides} />
             </>
           )}
         </section>

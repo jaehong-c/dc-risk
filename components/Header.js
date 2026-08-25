@@ -3,6 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+const TOOLS = [
+  { key: "screener", label: "Site Screener", href: "https://dc-screener.vercel.app" },
+  { key: "lease", label: "Lease", href: "https://dc-lease.vercel.app" },
+  { key: "risk", label: "Risk Register", href: null },
+];
+
 export default function Header({ right }) {
   const path = usePathname();
   const link = (href, label) => (
@@ -38,9 +44,39 @@ export default function Header({ right }) {
             {link("/about", "About")}
           </nav>
         </div>
+
         <div className="flex items-center" style={{ gap: 24 }}>
           {right}
-          <span className="mono text-[11px] text-ink-3">Prototype · curated risk library</span>
+          <div className="flex items-center gap-2">
+            <span className="eyebrow" style={{ color: "var(--ink-3)" }}>DC tools</span>
+            <div
+              className="flex items-center"
+              style={{ border: "1px solid var(--line-2)", borderRadius: 4, overflow: "hidden" }}
+            >
+              {TOOLS.map((t, i) => {
+                const current = t.href === null;
+                const style = {
+                  padding: "0 10px",
+                  height: 26,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  fontSize: 11.5,
+                  fontWeight: current ? 600 : 500,
+                  color: current ? "#fff" : "var(--ink-2)",
+                  background: current ? "var(--ink)" : "var(--surface)",
+                  borderLeft: i === 0 ? "none" : "1px solid var(--line-2)",
+                  textDecoration: "none",
+                };
+                return current ? (
+                  <span key={t.key} style={style}>{t.label}</span>
+                ) : (
+                  <a key={t.key} href={t.href} target="_blank" rel="noreferrer" style={style}>
+                    {t.label}
+                  </a>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
     </header>

@@ -23,14 +23,33 @@ const LIST_FG = {
 
 const ROW_H = 56;
 const GAP = 3;
+const GRID_H = ROW_H * 5 + GAP * 4;
 
 export default function HeatMatrix({ matrix, selected, onSelect, top }) {
   const isSel = (l, i) => selected && selected.l === l && selected.i === i;
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 28 }}>
-      <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 10, alignItems: "start" }}>
-        {/* Y axis */}
+      <div style={{ display: "grid", gridTemplateColumns: "auto auto 1fr", gap: 8, alignItems: "start" }}>
+        {/* Impact title, rotated */}
+        <div
+          style={{
+            height: GRID_H,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 16,
+          }}
+        >
+          <span
+            className="eyebrow whitespace-nowrap"
+            style={{ transform: "rotate(-90deg)", transformOrigin: "center" }}
+          >
+            Impact
+          </span>
+        </div>
+
+        {/* Y axis numbers */}
         <div
           style={{
             display: "grid",
@@ -38,7 +57,7 @@ export default function HeatMatrix({ matrix, selected, onSelect, top }) {
             gap: GAP,
             alignItems: "center",
             justifyItems: "end",
-            paddingRight: 4,
+            paddingRight: 2,
           }}
         >
           {[5, 4, 3, 2, 1].map((i) => (
@@ -90,7 +109,7 @@ export default function HeatMatrix({ matrix, selected, onSelect, top }) {
             )}
           </div>
 
-          {/* X axis */}
+          {/* X axis numbers */}
           <div
             style={{
               display: "grid",
@@ -106,12 +125,11 @@ export default function HeatMatrix({ matrix, selected, onSelect, top }) {
             ))}
           </div>
 
-          {/* Axis titles and legend */}
-          <div className="mt-3 flex items-center justify-between">
-            <span className="eyebrow">Likelihood →</span>
-            <span className="eyebrow">↑ Impact</span>
-          </div>
-          <div className="mt-3 flex items-center gap-4">
+          {/* X axis title */}
+          <p className="eyebrow mt-2 text-center">Likelihood</p>
+
+          {/* Legend */}
+          <div className="mt-4 flex items-center justify-center gap-4">
             {[
               ["low", "Low 1–4"],
               ["medium", "Med 5–9"],
